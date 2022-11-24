@@ -1,0 +1,14 @@
+DOWNLOAD PROJECT
+
+git clone https://gitlab.ceng.metu.edu.tr/group-27/nlq.git
+enter username: e1234567
+enter password: ********
+
+
+COMMIT CHANGES
+
+in project file
+
+git add .
+git commit -m "MESSAGE"
+git push -u origin main
