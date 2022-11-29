@@ -16,6 +16,6 @@ def connect_sql_db(db_type, username, password, server, db):
         connection_string = "oracle+cx_oracle" + connection_string
 
     engine = create_engine(connection_string)
-    
+
     return engine
 
