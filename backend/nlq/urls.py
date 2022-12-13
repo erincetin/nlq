@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path('hello', views.hello),
+    path('/get-sql-query', views.get_sql_query),
 ]
