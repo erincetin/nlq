@@ -2,7 +2,9 @@ from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 import json
 import requests
-from utils import connect_sql_db
+from .utils import connect_sql_db
+
+
 # Create your views here.
 
 
@@ -18,8 +20,10 @@ def get_sql_query(request):
 
     data = json.loads(request.body)
     input_sentence = data.get("input")
-    port = data.get("port")
-    server = data.get("server")
+    # port = data.get("port")
+    port = 5430
+    # hostname = data.get("server")
+    hostname = "localhost"
     database = data.get("database")
     username = data.get("username")
     password = data.get("password")
@@ -31,9 +35,10 @@ def get_sql_query(request):
         return JsonResponse(
             {"status": "error", "message": "Input is required"}, status=404)
 
-    r = requests.post("https://a434edb2-d402-43d8.gradio.live/run/predict", json={ #url will be changed according to colab link
-        "data": {"sentence": input_sentence,        #these can be changed back to hello world if they give errors
-                 "db_info": database_info}}).json()
+    r = requests.post("https://015346d8-f7ef-47f9.gradio.live/run/predict",
+                      json={  # url will be changed according to colab link
+                          "data": [input_sentence, database_info]}).json()
+                                   # these can be changed back to hello world if they give errors
 
     if r.status_code != 200:
         return JsonResponse({
@@ -42,7 +47,7 @@ def get_sql_query(request):
 
     query = r.get("data")[0]
 
-    engine = connect_sql_db('postgresql', username, password, server, database)
+    engine = connect_sql_db('postgresql', username, password, hostname, database)
     cursor = engine.raw_connection().cursor()
     cursor.execute(query)
     result = cursor.fetchall()
