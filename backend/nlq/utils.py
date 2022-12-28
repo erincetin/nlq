@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from django.conf import settings
-
+#from django.conf import settings
+from backend import settings
+#
 def connect_sql_db(db_type, username, password, server, db):
     connection_string = f"://{username}:{password}@{server}/{db}"
 
@@ -30,4 +31,6 @@ def get_sql(query):
     output = settings.model.generate(input_ids=features['input_ids'],
                             attention_mask=features['attention_mask'])
 
+    print(query)
+    print(settings.tokenizer.decode(output[0]))
     return settings.tokenizer.decode(output[0])

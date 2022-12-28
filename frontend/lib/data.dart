@@ -1,51 +1,21 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:nl2ssql/main.dart';
+import 'package:frontend/main.dart';
 import 'package:responsive_table/responsive_table.dart';
 
 class DataPage extends StatefulWidget {
-  DataPage({Key? key}) : super(key: key);
+  List<Map<String, dynamic>> datajson;
+  DataPage({Key? key,  required this.datajson}) : super(key: key);
   @override
-  _DataPageState createState() => _DataPageState();
+  _DataPageState createState() => _DataPageState(this.datajson);
 }
 
 class _DataPageState extends State<DataPage> {
+  List<Map<String, dynamic>> datajson;
+  _DataPageState(this.datajson);
   late List<DatatableHeader> _headers;
-  List<Map<String, dynamic>> datajson = [
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "celal",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "songül",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "ertuğrul",
-      "password": "Esy",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "beyaz",
-      "userID": "5",
-      "userName": "yaren",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    }
-  ];
+
   List<int> _perPages = [10, 20, 50, 100];
   int? _total;
   int? _currentPerPage = 10;

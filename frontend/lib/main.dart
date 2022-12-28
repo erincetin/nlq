@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:nl2ssql/data.dart';
+import 'package:frontend/data.dart';
 
 import 'SetDatabase.dart';
 
@@ -44,6 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
       " | concert_singer | stadium : stadium_id, location, name, capacity, highest, lowest, average | singer : singer_id, name, country, song_name, song_release_year, age, is_male | concert : concert_id, concert_name, theme, stadium_id, year | singer_in_concert : concert_id, singer_id";
   static List<String>? ornek;
   TextEditingController question = TextEditingController();
+  List<Map<String, dynamic>> datajson = [];
   Future createsql(String question) async {
     final response = await http.post(
       Uri.parse('http://127.0.0.1:8000/get-sql-query'),
@@ -53,6 +54,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: jsonEncode({
         'input': question,
         'data': dropdownValue,
+        "server": "46.101.100.15:5430",
+        "database": "postgres",
         'username': 'root',
         'password': 'MetuNlqTe4m'
       }),
@@ -66,7 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     if (response.statusCode == 200) {
       decoded = jsonDecode(response.body);
-      ornek!.add(decoded!['data'].toString());
+      ornek!.add(decoded!['query'].toString());
+      datajson = decoded!['data'];
       setState(() {
         _isLoading = true;
       });
@@ -160,7 +164,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => DataPage()),
+                                    builder: (context) => DataPage(datajson: datajson)),
                               );
                             },
                             child: Text('Show data'),
