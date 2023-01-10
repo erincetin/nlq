@@ -2,14 +2,18 @@ from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 import json
 import requests
+import psycopg2
+import psycopg2.extras
 from .utils import connect_sql_db, get_sql
 from django.views.decorators.csrf import csrf_exempt
+
 
 # Create your views here.
 
 
 def hello(request):
     return HttpResponse("Hello")
+
 
 @csrf_exempt
 def get_sql_query(request):
@@ -65,5 +69,72 @@ def get_sql_query(request):
 
     return JsonResponse({
         "query": query,
-        #"data": result
+        # "data": result
     })
+
+
+# a function that takes the schema and the names of tables
+# in our case there will be one type of table schema
+def get_table_info(engine):
+    # take the connection to database
+
+    cursor = engine.raw_connection().cursor()
+
+    query = "SELECT table_schema, table_name " \
+            "FROM information_schema.tables " \
+            "WHERE table_schema != 'pg_catalog' " \
+            "AND table_type != 'information_schema' " \
+            "Order by table_schema, table_name "
+    cursor.execute(query)
+    tables = cursor.fetchall()
+    cursor.close()
+    return tables
+
+
+def get_column_info(engine, schema, table):
+    cursor = engine.raw_connection().cursor()
+
+    query = "SELECT column_name " \
+            "FROM information_schema.columns " \
+            "WHERE table_schema = %s And table_name = %s " \
+            "ORDER BY ordinal_position" % (schema, table)
+    cursor.execute(query)
+    columns = cursor.fetchall()
+    cursor.close()
+    return columns
+
+# this function is returning the string to frontend for storage and it will be required for the get_sql_function
+def database_info(request):
+    # this will most likely will be a put method but for now it will stay as post
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Wrong method"}, status=405
+        )
+
+    data = json.loads(request.body)
+    port = data.get("port")
+    #port = 5430
+    hostname = data.get("server")
+    database = data.get("database")
+    username = data.get("username")
+    password = data.get("password")
+
+    engine = connect_sql_db('postgresql', username, password, hostname, database)
+
+    tables = get_table_info(engine)
+
+    for table in tables:
+        table["columns"] = get_column_info(engine, table["table_schema"], table["table_name"])
+
+    engine.close()
+
+    db_info_string = " | concert_singer | "
+    for table in tables:
+        db_info_string += table["table_name"] + " : "
+        for column in table["columns"]:
+            db_info_string += column["column_name"] + ", "
+        db_info_string = db_info_string[:-2]
+        db_info_string += " | "
+    db_info_string = db_info_string[:-3]
+    print(db_info_string)
+    return db_info_string
