@@ -7,6 +7,8 @@ import psycopg2.extras
 from .utils import connect_sql_db, get_sql
 from django.views.decorators.csrf import csrf_exempt
 
+db_string = ""
+
 
 # Create your views here.
 
@@ -31,12 +33,13 @@ def get_sql_query(request):
     database = data.get("database")
     username = data.get("username")
     password = data.get("password")
+    database_info = data.get("db_info")
 
-    database_info = " | concert_singer | stadium : stadium_id, location, name, capacity, highest, lowest, average | " \
-                    "singer : singer_id, name, country, song_name, song_release_year, age, is_male | concert : " \
-                    "concert_id, concert_name, theme, stadium_id, year | singer_in_concert : concert_id, singer_id"
+    # database_info = " | concert_singer | stadium : stadium_id, location, name, capacity, highest, lowest, average | " \
+    #                "singer : singer_id, name, country, song_name, song_release_year, age, is_male | concert : " \
+    #               "concert_id, concert_name, theme, stadium_id, year | singer_in_concert : concert_id, singer_id"
 
-    company_format = " | company | departments : department_id, department_name | dept_emp : employee_id, department_id, from_date, to_date | dept_manager : department_id, employee_id, from_date, to_date | employees : employee_id, birth_date, first_name, last_name, gender, hire_date | salaries : employee_id, salary, from_date, to_date | titles : employee_id, title, from_date, to_date"
+    # company_format = " | company | departments : department_id, department_name | dept_emp : employee_id, department_id, from_date, to_date | dept_manager : department_id, employee_id, from_date, to_date | employees : employee_id, birth_date, first_name, last_name, gender, hire_date | salaries : employee_id, salary, from_date, to_date | titles : employee_id, title, from_date, to_date"
     if input_sentence is None:
         return JsonResponse(
             {"status": "error", "message": "Input is required"}, status=404)
@@ -103,6 +106,7 @@ def get_column_info(engine, schema, table):
     cursor.close()
     return columns
 
+
 # this function is returning the string to frontend for storage and it will be required for the get_sql_function
 def database_info(request):
     # this will most likely will be a put method but for now it will stay as post
@@ -113,7 +117,7 @@ def database_info(request):
 
     data = json.loads(request.body)
     port = data.get("port")
-    #port = 5430
+    # port = 5430
     hostname = data.get("server")
     database = data.get("database")
     username = data.get("username")
@@ -137,4 +141,14 @@ def database_info(request):
         db_info_string += " | "
     db_info_string = db_info_string[:-3]
     print(db_info_string)
+
+    # this will be unnecesary if this info will be given to us at every request from front
+    global db_string
+    db_string = db_info_string
+
     return db_info_string
+
+
+def disconnect_db():
+    global db_string
+    db_string = ""
