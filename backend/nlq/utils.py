@@ -155,7 +155,7 @@ def mysql_mssql_get_table_info(engine):
 
     query = "SELECT table_schema, table_name " \
             "FROM information_schema.tables " \
-            "WHERE table_type = 'BASE TABLE' " \
+            "WHERE table_type = 'BASE TABLE' and table_schema != 'performance_schema' " \
             "Order by table_schema, table_name "
     cursor.execute(query)
     tables = cursor.fetchall()
