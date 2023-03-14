@@ -4,18 +4,13 @@ import json
 import requests
 import psycopg2
 import psycopg2.extras
-from .utils import connect_sql_db, get_sql
+from .utils import connect_sql_db, get_sql, postgresql_info, mysql_mssql_info, oracle_info
 from django.views.decorators.csrf import csrf_exempt
 
 db_string = ""
 
 
 # Create your views here.
-
-
-def hello(request):
-    return HttpResponse("Hello")
-
 
 @csrf_exempt
 def get_sql_query(request):
@@ -26,31 +21,24 @@ def get_sql_query(request):
 
     data = json.loads(request.body)
     input_sentence = data.get("input")
-    # port = data.get("port")
-    port = 5430
-    # hostname = data.get("server")
+    port = data.get("port")
     hostname = data.get("server")
     database = data.get("database")
     username = data.get("username")
     password = data.get("password")
-    database_info = data.get("db_info")
+    db_info = data.get("db_info")
 
-    # database_info = " | concert_singer | stadium : stadium_id, location, name, capacity, highest, lowest, average | " \
-    #                "singer : singer_id, name, country, song_name, song_release_year, age, is_male | concert : " \
-    #               "concert_id, concert_name, theme, stadium_id, year | singer_in_concert : concert_id, singer_id"
-
-    # company_format = " | company | departments : department_id, department_name | dept_emp : employee_id, department_id, from_date, to_date | dept_manager : department_id, employee_id, from_date, to_date | employees : employee_id, birth_date, first_name, last_name, gender, hire_date | salaries : employee_id, salary, from_date, to_date | titles : employee_id, title, from_date, to_date"
     if input_sentence is None:
         return JsonResponse(
             {"status": "error", "message": "Input is required"}, status=404)
 
-    query = get_sql(input_sentence + database_info)
+    query = get_sql(input_sentence + db_info)
     query = query[:-4]
     query = query[query.find("select"):]
 
     """r = requests.post("https://015346d8-f7ef-47f9.gradio.live/run/predict",
                       json={  # url will be changed according to colab link
-                          "data": [input_sentence, database_info]}).json()
+                          "data": [input_sentence, db_info]}).json()
                                    # these can be changed back to hello world if they give errors
 
     if r.status_code != 200:
@@ -76,45 +64,15 @@ def get_sql_query(request):
     })
 
 
-# a function that takes the schema and the names of tables
-# in our case there will be one type of table schema
-def get_table_info(engine):
-    # take the connection to database
-
-    cursor = engine.raw_connection().cursor()
-
-    query = "SELECT table_schema, table_name " \
-            "FROM information_schema.tables " \
-            "WHERE table_schema != 'pg_catalog' " \
-            "AND table_type != 'information_schema' " \
-            "Order by table_schema, table_name "
-    cursor.execute(query)
-    tables = cursor.fetchall()
-    cursor.close()
-    return tables
-
-
-def get_column_info(engine, schema, table):
-    cursor = engine.raw_connection().cursor()
-
-    query = "SELECT column_name " \
-            "FROM information_schema.columns " \
-            "WHERE table_schema = %s And table_name = %s " \
-            "ORDER BY ordinal_position" % (schema, table)
-    cursor.execute(query)
-    columns = cursor.fetchall()
-    cursor.close()
-    return columns
-
-
-# this function is returning the string to frontend for storage and it will be required for the get_sql_function
+# this function is returning the string to frontend for storage, and it will be required for the get_sql_function
 def database_info(request):
     # this will most likely will be a put method but for now it will stay as post
     if request.method != "POST":
         return JsonResponse(
             {"status": "error", "message": "Wrong method"}, status=405
         )
-
+    global db_string
+    db_info = ''
     data = json.loads(request.body)
     port = data.get("port")
     # port = 5430
@@ -122,31 +80,18 @@ def database_info(request):
     database = data.get("database")
     username = data.get("username")
     password = data.get("password")
+    db_type = data.get("db_type")
 
-    engine = connect_sql_db('postgresql', username, password, hostname, database)
-
-    tables = get_table_info(engine)
-
-    for table in tables:
-        table["columns"] = get_column_info(engine, table["table_schema"], table["table_name"])
-
-    engine.close()
-
-    db_info_string = " | concert_singer | "
-    for table in tables:
-        db_info_string += table["table_name"] + " : "
-        for column in table["columns"]:
-            db_info_string += column["column_name"] + ", "
-        db_info_string = db_info_string[:-2]
-        db_info_string += " | "
-    db_info_string = db_info_string[:-3]
-    print(db_info_string)
-
-    # this will be unnecesary if this info will be given to us at every request from front
+    if db_type == 'mysql':
+        db_info = mysql_mssql_info(username, password, hostname, database, 0)
+    elif db_type == 'postgresql':
+        db_info = postgresql_info(username, password, hostname, database)
+    elif db_type == 'mssql':
+        db_info = mysql_mssql_info(username, password, hostname, database, 1)
+    elif db_type == 'oracle':
+        db_info = oracle_info(username, password, hostname, database)
     global db_string
-    db_string = db_info_string
-
-    return db_info_string
+    db_string = db_info
 
 
 def disconnect_db():
