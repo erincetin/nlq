@@ -2,18 +2,17 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:frontend/main.dart';
+import 'package:frontend/widgets/SideBar.dart';
 import 'package:responsive_table/responsive_table.dart';
 
 class DataPage extends StatefulWidget {
-  List<Map<String, dynamic>> datajson;
-  DataPage({Key? key,  required this.datajson}) : super(key: key);
+  final List<Map<String, dynamic>> sqlData;
+  const DataPage({Key? key,  required this.sqlData}) : super(key: key);
   @override
-  _DataPageState createState() => _DataPageState(this.datajson);
+  _DataPageState createState() => _DataPageState();
 }
 
 class _DataPageState extends State<DataPage> {
-  List<Map<String, dynamic>> datajson;
-  _DataPageState(this.datajson);
   late List<DatatableHeader> _headers;
 
   List<int> _perPages = [10, 20, 50, 100];
@@ -43,8 +42,8 @@ class _DataPageState extends State<DataPage> {
 
     print(i);
     // ignore: unused_local_variable
-    for (var data in datajson) {
-      temps.add(datajson[i]);
+    for (var data in widget.sqlData) {
+      temps.add(widget.sqlData[i]);
       i++;
     }
     return temps;
@@ -63,8 +62,8 @@ class _DataPageState extends State<DataPage> {
       _sourceOriginal.addAll(_generateData(n: random.nextInt(10000)));
       _sourceFiltered = _sourceOriginal;
       _total = _sourceFiltered.length;
-      _source = _currentPerPage! > datajson.length
-          ? _sourceFiltered.getRange(0, datajson.length).toList()
+      _source = _currentPerPage! > widget.sqlData.length
+          ? _sourceFiltered.getRange(0, widget.sqlData.length).toList()
           : _sourceFiltered.getRange(0, _currentPerPage!).toList();
       setState(() => _isLoading = false);
     });
@@ -109,15 +108,15 @@ class _DataPageState extends State<DataPage> {
 
   @override
   void initState() {
-    _total = datajson.length;
+    _total = widget.sqlData.length;
     super.initState();
     _headers = [];
 
     /// set headers
-    for (int i = 0; i < datajson[0].keys.toList().length; i++) {
+    for (int i = 0; i < widget.sqlData[0].keys.toList().length; i++) {
       _headers.add(DatatableHeader(
-          text: datajson[0].keys.toList()[i].toString(),
-          value: datajson[0].keys.toList()[i].toString(),
+          text: widget.sqlData[0].keys.toList()[i].toString(),
+          value: widget.sqlData[0].keys.toList()[i].toString(),
           show: true,
           sortable: true,
           textAlign: TextAlign.center));
@@ -135,7 +134,7 @@ class _DataPageState extends State<DataPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("DATA TABLE"),
+        title: const Text("DATA TABLE"),
         actions: [
           IconButton(
             onPressed: _initializeData,
@@ -143,7 +142,7 @@ class _DataPageState extends State<DataPage> {
           ),
         ],
       ),
-      drawer: kullanici(),
+      drawer: const SideBar(),
       body: SingleChildScrollView(
           child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
