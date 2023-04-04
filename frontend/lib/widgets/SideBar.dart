@@ -3,32 +3,32 @@ import 'package:frontend/main.dart';
 import 'package:frontend/screens/DatabaseConnectionScreen.dart';
 
 class SideBar extends StatelessWidget {
-  const SideBar({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              colors: [Colors.green.shade500, Colors.green.shade50],
-              begin: Alignment.topCenter,
+              colors: [Colors.white, Colors.blue.shade800, Colors.black],
+              begin: Alignment.center,
               end: Alignment.bottomCenter),
         ),
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
-              child: const Text(
-                'HELLO',
-                style: TextStyle(color: Colors.black, fontSize: 23),
-                textAlign: TextAlign.center,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Colors.green, Colors.green.shade700],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter),
+            SizedBox(
+              height: 270,
+              child: DrawerHeader(
+                child: Text(
+                  '',
+                  style: TextStyle(color: Colors.black, fontSize: 23),
+                  textAlign: TextAlign.center,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.symmetric(),
+                  image: DecorationImage(
+                      image: AssetImage("assets/images/bitirme logo.PNG")),
+                ),
               ),
             ),
             ListTile(
@@ -38,7 +38,7 @@ class SideBar extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const MyApp()),
-                )
+                ),
               },
             ),
             ListTile(
@@ -46,9 +46,10 @@ class SideBar extends StatelessWidget {
               title: const Text('DATABASE'),
               onTap: () => {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const DatabaseConnectionScreen()),
-                )
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DatabaseConnectionScreen(),
+                    ))
               },
             ),
             ListTile(

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/Classes/connectionhandler.dart';
+import 'package:provider/provider.dart';
+
 import 'screens/MainScreen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(ChangeNotifierProvider<connectionhandler>(
+      create: (BuildContext context) => connectionhandler(),
+      child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -10,16 +15,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        primarySwatch: Colors.blue,
       ),
-      home: const MainScreen(),
+      home: MainScreen(),
     );
   }
 }
-
-
-
-
-
