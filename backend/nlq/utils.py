@@ -26,6 +26,21 @@ def connect_sql_db(db_type, username, password, server, db):
 
     return engine
 
+# this function is returning the string to frontend for storage, and it will be required for the get_sql_function
+def database_info(request, db_type, username, password, hostname, database):
+    # this will most likely will be a put method but for now it will stay as post
+
+    if db_type == 'mysql':
+        db_info = mysql_mssql_info(username, password, hostname, database, 0)
+    elif db_type == 'postgresql':
+        db_info = postgresql_info(username, password, hostname, database)
+    elif db_type == 'mssql':
+        db_info = mysql_mssql_info(username, password, hostname, database, 1)
+    elif db_type == 'oracle':
+        db_info = oracle_info(username, password, hostname, database)
+
+    return db_info
+
 
 def get_sql(query):
     input_text = query
