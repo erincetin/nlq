@@ -4,9 +4,11 @@ import '../screens/DataScreen.dart';
 
 class SqlQueryListViewBuilder extends StatelessWidget {
   final List<String> queries;
-  final List<Map<String, dynamic>> data;
+  final List<List<Map<String, dynamic>>> data;
 
-  const SqlQueryListViewBuilder({Key? key, required this.queries, required this.data}) : super(key: key);
+  const SqlQueryListViewBuilder(
+      {Key? key, required this.queries, required this.data})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +16,12 @@ class SqlQueryListViewBuilder extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       children: List.generate(
         queries.length,
-            (index) => Row(
+        (index) => Row(
           children: [
             Expanded(
               child: Container(
                 child: ListTile(
-                  title: Text(queries[index]),
+                  title: Text(queries[queries.length - index - 1]),
                 ),
                 width: 800,
               ),
@@ -30,14 +32,15 @@ class SqlQueryListViewBuilder extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.all<Color>(
-                        Colors.black),
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.black),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => DataPage(sqlData: data)),
+                          builder: (context) =>
+                              DataPage(sqlData: data[data.length - index - 1])),
                     );
                   },
                   child: const Text('Show data'),

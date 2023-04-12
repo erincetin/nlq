@@ -1,1 +1,7 @@
-const List<String> databases = <String>['company', 'movies'];
+const List<String> databases = <String>[
+  'ORACLE',
+  'PostgreSQL',
+  'MariaDB',
+  'MongoDB',
+  'Sqlite'
+];
