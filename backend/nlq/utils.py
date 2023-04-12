@@ -58,39 +58,56 @@ def postgresql_info(username, password, hostname, database):
     engine = connect_sql_db('postgresql', username, password, hostname, database)
 
     tables = postgres_get_table_info(engine)
+    if len(tables) == 0:
+        print("No table")
+        return None
 
+    tables_dict = []
     for table in tables:
-        table["columns"] = postgres_get_column_info(engine, table["table_schema"], table["table_name"])
+        n_table = {"table_schema": table[0], 'table_name': table[1],
+                   "columns": postgres_get_column_info(engine, table[0], table[1])}
+        tables_dict.append(n_table)
 
-    db_info_string = make_info_string(tables)
+    db_info_string = make_info_string(tables_dict)
     return db_info_string
 
 
 def mysql_mssql_info(username, password, hostname, database, d_type):
     if d_type == 0:
         engine = connect_sql_db('mysql', username, password, hostname, database)
-        tables = mysql_mssql_get_table_info(engine)
-        for table in tables:
-            table["columns"] = mysql_mssql_get_column_info(engine, table["table_schema"], table["table_name"])
-        db_info_string = make_info_string(tables)
-        return db_info_string
     elif d_type == 1:
         engine = connect_sql_db('mssql', username, password, hostname, database)
-        tables = mysql_mssql_get_table_info(engine)
-        for table in tables:
-            table["columns"] = mysql_mssql_get_column_info(engine, table["table_schema"], table["table_name"])
-        db_info_string = make_info_string(tables)
-        return db_info_string
+
+    tables = mysql_mssql_get_table_info(engine)
+    if len(tables) == 0:
+        print("No table")
+        return None
+
+    tables_dict = []
+    for table in tables:
+        n_table = {"table_schema": table[0], 'table_name': table[1],
+                   "columns": mysql_mssql_get_column_info(engine, table[0], table[1])}
+        tables_dict.append(n_table)
+
+    db_info_string = make_info_string(tables_dict)
+    return db_info_string
 
 
 def oracle_info(username, password, hostname, database):
     engine = connect_sql_db('oracle', username, password, hostname, database)
     tables = oracle_get_table_info(engine)
 
-    for table in tables:
-        table["columns"] = oracle_get_column_info(engine, table["table_name"])
+    if len(tables) == 0:
+        print("No table")
+        return None
 
-    db_info_string = make_info_string(tables)
+    tables_dict = []
+    for table in tables:
+        n_table = {"table_schema": table[0], 'table_name': table[1],
+                   "columns": oracle_get_column_info(engine, table[1])}
+        tables_dict.append(n_table)
+
+    db_info_string = make_info_string(tables_dict)
     return db_info_string
 
 
