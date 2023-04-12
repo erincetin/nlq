@@ -25,7 +25,7 @@ def get_sql_query(request):
     username = data.get("username")
     password = data.get("password")
     database_type = data.get("database_type")
-    db_info = database_info(input_sentence, database_type, username, password, hostname, database)
+    db_info = database_info(database_type, username, password, hostname, database)
 
     if input_sentence is None:
         return JsonResponse(
