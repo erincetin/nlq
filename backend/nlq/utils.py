@@ -27,6 +27,22 @@ def connect_sql_db(db_type, username, password, server, db):
     return engine
 
 
+# this function is returning the string to frontend for storage, and it will be required for the get_sql_function
+def database_info(db_type, username, password, hostname, database):
+    # this will most likely will be a put method but for now it will stay as post
+
+    if db_type == 'mysql':
+        db_info = mysql_mssql_info(username, password, hostname, database, 0)
+    elif db_type == 'postgresql':
+        db_info = postgresql_info(username, password, hostname, database)
+    elif db_type == 'mssql':
+        db_info = mysql_mssql_info(username, password, hostname, database, 1)
+    elif db_type == 'oracle':
+        db_info = oracle_info(username, password, hostname, database)
+
+    return db_info
+
+
 def get_sql(query):
     input_text = query
 
@@ -58,39 +74,56 @@ def postgresql_info(username, password, hostname, database):
     engine = connect_sql_db('postgresql', username, password, hostname, database)
 
     tables = postgres_get_table_info(engine)
+    if len(tables) == 0:
+        print("No table")
+        return None
 
+    tables_dict = []
     for table in tables:
-        table["columns"] = postgres_get_column_info(engine, table["table_schema"], table["table_name"])
+        n_table = {"table_schema": table[0], 'table_name': table[1],
+                   "columns": postgres_get_column_info(engine, table[0], table[1])}
+        tables_dict.append(n_table)
 
-    db_info_string = make_info_string(tables)
+    db_info_string = make_info_string(tables_dict)
     return db_info_string
 
 
 def mysql_mssql_info(username, password, hostname, database, d_type):
     if d_type == 0:
         engine = connect_sql_db('mysql', username, password, hostname, database)
-        tables = mysql_mssql_get_table_info(engine)
-        for table in tables:
-            table["columns"] = mysql_mssql_get_column_info(engine, table["table_schema"], table["table_name"])
-        db_info_string = make_info_string(tables)
-        return db_info_string
     elif d_type == 1:
         engine = connect_sql_db('mssql', username, password, hostname, database)
-        tables = mysql_mssql_get_table_info(engine)
-        for table in tables:
-            table["columns"] = mysql_mssql_get_column_info(engine, table["table_schema"], table["table_name"])
-        db_info_string = make_info_string(tables)
-        return db_info_string
+
+    tables = mysql_mssql_get_table_info(engine)
+    if len(tables) == 0:
+        print("No table")
+        return None
+
+    tables_dict = []
+    for table in tables:
+        n_table = {"table_schema": table[0], 'table_name': table[1],
+                   "columns": mysql_mssql_get_column_info(engine, table[0], table[1])}
+        tables_dict.append(n_table)
+
+    db_info_string = make_info_string(tables_dict)
+    return db_info_string
 
 
 def oracle_info(username, password, hostname, database):
     engine = connect_sql_db('oracle', username, password, hostname, database)
     tables = oracle_get_table_info(engine)
 
-    for table in tables:
-        table["columns"] = oracle_get_column_info(engine, table["table_name"])
+    if len(tables) == 0:
+        print("No table")
+        return None
 
-    db_info_string = make_info_string(tables)
+    tables_dict = []
+    for table in tables:
+        n_table = {"table_schema": table[0], 'table_name': table[1],
+                   "columns": oracle_get_column_info(engine, table[1])}
+        tables_dict.append(n_table)
+
+    db_info_string = make_info_string(tables_dict)
     return db_info_string
 
 
@@ -155,7 +188,7 @@ def mysql_mssql_get_table_info(engine):
 
     query = "SELECT table_schema, table_name " \
             "FROM information_schema.tables " \
-            "WHERE table_type = 'BASE TABLE' " \
+            "WHERE table_type = 'BASE TABLE' and table_schema != 'performance_schema' " \
             "Order by table_schema, table_name "
     cursor.execute(query)
     tables = cursor.fetchall()
