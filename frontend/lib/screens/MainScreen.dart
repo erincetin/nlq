@@ -78,7 +78,9 @@ class _MainScreenState extends State<MainScreen> {
       "birimID": "1"
     }
   ];
-
+  String admin_question = 'default';
+  String link = 'default';
+  String database_format = 'default';
   bool _isLoading = false;
   bool _isError = false;
 
@@ -95,6 +97,24 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void linkTextChangeHandler(String input) {
+    setState(() {
+      link = input;
+    });
+  }
+
+  void admin_questionTextChangeHandler(String input) {
+    setState(() {
+      admin_question = input;
+    });
+  }
+
+  void database_formatTextChangeHandler(String input) {
+    setState(() {
+      database_format = input;
+    });
+  }
+
   Future<void> getSqlQueryHandler() async {
     setState(() {
       _isLoading = true;
@@ -104,34 +124,42 @@ class _MainScreenState extends State<MainScreen> {
     http.Response response;
     try {
       response = await http.post(
-        Uri.parse(ApiUrl.getQuery),
+        Uri.parse(question == 'admin' ? link : ApiUrl.getQuery),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
-        body: jsonEncode({
-          'input': question,
-          'data': dropdownValue,
-          'server':
-              Provider.of<connectionhandler>(context, listen: false).Server,
-          'database':
-              Provider.of<connectionhandler>(context, listen: false).Port,
-          'username':
-              Provider.of<connectionhandler>(context, listen: false).Username,
-          'password':
-              Provider.of<connectionhandler>(context, listen: false).Password
-        }),
+        body: question == 'admin'
+            ? jsonEncode({
+                'data': [link, database_format]
+              })
+            : jsonEncode({
+                'input': question,
+                'data': dropdownValue,
+                'server': Provider.of<connectionhandler>(context, listen: false)
+                    .Server,
+                'database':
+                    Provider.of<connectionhandler>(context, listen: false).Port,
+                'username':
+                    Provider.of<connectionhandler>(context, listen: false)
+                        .Username,
+                'password':
+                    Provider.of<connectionhandler>(context, listen: false)
+                        .Password
+              }),
       );
 
       if (response.statusCode == 200) {
         decoded = jsonDecode(response.body);
-        queryResults.add(decoded!['query'].toString());
-        queryData.add(decoded!['data']);
+        queryResults
+            .add(decoded![question == 'admin' ? 'data' : 'query'].toString());
+        queryData.add(question == 'admin' ? demo1 : decoded!['data']);
       }
     } catch (err) {
       //Cannot connect to the server
       setState(() => _isError = true);
       setState(() => queryResults.add(jsonEncode({
-            'input': question,
+            'input': question == 'admin' ? admin_question : question,
+            'database_format': question == 'admin' ? database_format : '\n',
             'data': dropdownValue,
             'server':
                 Provider.of<connectionhandler>(context, listen: false).Server,
@@ -165,6 +193,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
             onPressed: () {
               setState(() {
+                _isError = false;
                 queryResults = [];
                 queryData = [];
               });
@@ -182,6 +211,7 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           children: [
             TextField(
+              autocorrect: true,
               onChanged: questionTextChangeHandler,
               style: const TextStyle(fontSize: 18),
               decoration: const InputDecoration(
@@ -191,6 +221,44 @@ class _MainScreenState extends State<MainScreen> {
                 hintText: "Enter your question",
               ),
             ),
+            question == 'admin'
+                ? Column(
+                    children: [
+                      TextField(
+                        onChanged: admin_questionTextChangeHandler,
+                        style: const TextStyle(fontSize: 18),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "Admin question",
+                          prefixIcon: Icon(Icons.search),
+                          hintText: "question(.......)",
+                        ),
+                      ),
+                      TextField(
+                        onChanged: linkTextChangeHandler,
+                        style: const TextStyle(fontSize: 18),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "ML MODEL",
+                          prefixIcon: Icon(Icons.search),
+                          hintText: "Link of model(.......)",
+                        ),
+                      ),
+                      TextField(
+                        onChanged: database_formatTextChangeHandler,
+                        style: const TextStyle(fontSize: 18),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "Database format",
+                          prefixIcon: Icon(Icons.search),
+                          hintText: "format of database(.......)",
+                        ),
+                      )
+                    ],
+                  )
+                : SizedBox(
+                    height: 5,
+                  ),
             Row(
               children: [
                 SizedBox(

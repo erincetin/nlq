@@ -7,15 +7,16 @@ import 'package:path/path.dart';
 import 'package:responsive_table/responsive_table.dart';
 
 class DataPage extends StatefulWidget {
-  final List<Map<String, dynamic>> sqlData;
-  const DataPage({Key? key, required this.sqlData}) : super(key: key);
+  List<Map<String, dynamic>> sqlData;
+  String sql_querry;
+  DataPage({Key? key, required this.sqlData, required this.sql_querry})
+      : super(key: key);
   @override
   _DataPageState createState() => _DataPageState();
 }
 
 class _DataPageState extends State<DataPage> {
   late List<DatatableHeader> _headers;
-
   List<int> _perPages = [10, 20, 50, 100];
   int? _total;
   int? _currentPerPage = 10;
@@ -37,6 +38,7 @@ class _DataPageState extends State<DataPage> {
   bool _showSelect = true;
   var random = new Random();
   List<String> exell = [];
+  TextEditingController controller_ = TextEditingController();
 
   List<Map<String, dynamic>> _generateData({int n: 100}) {
     List<Map<String, dynamic>> temps = [];
@@ -160,182 +162,283 @@ class _DataPageState extends State<DataPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               mainAxisSize: MainAxisSize.max,
               children: [
-            Container(
-              margin: EdgeInsets.all(10),
-              padding: EdgeInsets.all(0),
-              constraints: BoxConstraints(
-                maxHeight: 700,
-              ),
-              child: Card(
-                elevation: 1,
-                shadowColor: Colors.black,
-                clipBehavior: Clip.none,
-                child: ResponsiveDatatable(
-                  reponseScreenSizes: [ScreenSize.xs],
-                  actions: [
-                    if (_isSearch)
-                      Expanded(
-                          child: TextField(
-                        decoration: InputDecoration(
-                            hintText: 'Enter search term based on ' +
-                                _searchKey!
-                                    .replaceAll(new RegExp('[\\W_]+'), ' ')
-                                    .toUpperCase(),
-                            prefixIcon: IconButton(
-                                icon: Icon(Icons.cancel),
-                                onPressed: () {
-                                  setState(() {
-                                    _isSearch = false;
-                                  });
-                                  _initializeData();
-                                }),
-                            suffixIcon: IconButton(
-                                icon: Icon(Icons.search), onPressed: () {})),
-                        onSubmitted: (value) {
-                          _filterData(value);
-                        },
-                      )),
-                    if (!_isSearch)
-                      IconButton(
-                          icon: Icon(Icons.search),
-                          onPressed: () {
-                            setState(() {
-                              _isSearch = true;
-                            });
-                          })
-                  ],
-                  headers: _headers,
-                  source: _source,
-                  selecteds: _selecteds,
-                  autoHeight: false,
-                  dropContainer: (data) {
-                    return _DropDownContainer(data: data);
-                  },
-                  onChangedRow: (value, header) {
-                    /// print(value);
-                    /// print(header);
-                  },
-                  onSubmittedRow: (value, header) {
-                    /// print(value);
-                    /// print(header);
-                  },
-                  onTabRow: (data) {
-                    print(data);
-                  },
-                  onSort: (value) {
-                    setState(() => _isLoading = true);
-
-                    setState(() {
-                      _sortColumn = value;
-                      _sortAscending = !_sortAscending;
-                      if (_sortAscending) {
-                        _sourceFiltered.sort((a, b) =>
-                            b["$_sortColumn"].compareTo(a["$_sortColumn"]));
-                      } else {
-                        _sourceFiltered.sort((a, b) =>
-                            a["$_sortColumn"].compareTo(b["$_sortColumn"]));
-                      }
-                      var _rangeTop = _currentPerPage! < _sourceFiltered.length
-                          ? _currentPerPage!
-                          : _sourceFiltered.length;
-                      _source = _sourceFiltered.getRange(0, _rangeTop).toList();
-                      _searchKey = value;
-
-                      _isLoading = false;
-                    });
-                  },
-                  expanded: _expanded,
-                  sortAscending: _sortAscending,
-                  sortColumn: _sortColumn,
-                  isLoading: _isLoading,
-                  footers: [
-                    TextButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.blue),
-                        foregroundColor:
-                            MaterialStateProperty.all<Color>(Colors.white),
-                      ),
-                      onPressed: () {
-                        _sourcetoarray(_source);
-                        main(exell);
+            Column(
+              children: [
+                Container(
+                  margin: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(0),
+                  constraints: BoxConstraints(
+                    maxHeight: 500,
+                  ),
+                  child: Card(
+                    elevation: 1,
+                    shadowColor: Colors.black,
+                    clipBehavior: Clip.none,
+                    child: ResponsiveDatatable(
+                      reponseScreenSizes: [ScreenSize.xs],
+                      actions: [
+                        if (_isSearch)
+                          Expanded(
+                              child: TextField(
+                            decoration: InputDecoration(
+                                hintText: 'Enter search term based on ' +
+                                    _searchKey!
+                                        .replaceAll(new RegExp('[\\W_]+'), ' ')
+                                        .toUpperCase(),
+                                prefixIcon: IconButton(
+                                    icon: Icon(Icons.cancel),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isSearch = false;
+                                      });
+                                      _initializeData();
+                                    }),
+                                suffixIcon: IconButton(
+                                    icon: Icon(Icons.search),
+                                    onPressed: () {})),
+                            onSubmitted: (value) {
+                              _filterData(value);
+                            },
+                          )),
+                        if (!_isSearch)
+                          IconButton(
+                              icon: Icon(Icons.search),
+                              onPressed: () {
+                                setState(() {
+                                  _isSearch = true;
+                                });
+                              })
+                      ],
+                      headers: _headers,
+                      source: _source,
+                      selecteds: _selecteds,
+                      autoHeight: false,
+                      dropContainer: (data) {
+                        return _DropDownContainer(data: data);
                       },
-                      child: Text('Export as excell'),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      child: Text("Rows per page:"),
-                    ),
-                    if (_perPages.isNotEmpty)
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: DropdownButton<int>(
-                          value: _currentPerPage,
-                          items: _perPages
-                              .map((e) => DropdownMenuItem<int>(
-                                    child: Text("$e"),
-                                    value: e,
-                                  ))
-                              .toList(),
-                          onChanged: (dynamic value) {
-                            setState(() {
-                              _currentPerPage = value;
-                              _currentPage = 1;
-                              _resetData();
-                            });
-                          },
-                          isExpanded: false,
-                        ),
-                      ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      child:
-                          Text("$_currentPage - $_currentPerPage of $_total"),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        size: 16,
-                      ),
-                      onPressed: _currentPage == 1
-                          ? null
-                          : () {
-                              var _nextSet = _currentPage - _currentPerPage!;
-                              setState(() {
-                                _currentPage = _nextSet > 1 ? _nextSet : 1;
-                                _resetData(start: _currentPage - 1);
-                              });
-                            },
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.arrow_forward_ios, size: 16),
-                      onPressed: _currentPage + _currentPerPage! - 1 > _total!
-                          ? null
-                          : () {
-                              var _nextSet = _currentPage + _currentPerPage!;
+                      onChangedRow: (value, header) {
+                        /// print(value);
+                        /// print(header);
+                      },
+                      onSubmittedRow: (value, header) {
+                        /// print(value);
+                        /// print(header);
+                      },
+                      onTabRow: (data) {
+                        print(data);
+                      },
+                      onSort: (value) {
+                        setState(() => _isLoading = true);
 
-                              setState(() {
-                                _currentPage = _nextSet < _total!
-                                    ? _nextSet
-                                    : _total! - _currentPerPage!;
-                                _resetData(start: _nextSet - 1);
-                              });
-                            },
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                    )
-                  ],
-                  headerDecoration: BoxDecoration(
-                    color: Colors.blue,
+                        setState(() {
+                          _sortColumn = value;
+                          _sortAscending = !_sortAscending;
+                          if (_sortAscending) {
+                            _sourceFiltered.sort((a, b) =>
+                                b["$_sortColumn"].compareTo(a["$_sortColumn"]));
+                          } else {
+                            _sourceFiltered.sort((a, b) =>
+                                a["$_sortColumn"].compareTo(b["$_sortColumn"]));
+                          }
+                          var _rangeTop =
+                              _currentPerPage! < _sourceFiltered.length
+                                  ? _currentPerPage!
+                                  : _sourceFiltered.length;
+                          _source =
+                              _sourceFiltered.getRange(0, _rangeTop).toList();
+                          _searchKey = value;
+
+                          _isLoading = false;
+                        });
+                      },
+                      expanded: _expanded,
+                      sortAscending: _sortAscending,
+                      sortColumn: _sortColumn,
+                      isLoading: _isLoading,
+                      footers: [
+                        TextButton(
+                          style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.all<Color>(Colors.blue),
+                            foregroundColor:
+                                MaterialStateProperty.all<Color>(Colors.white),
+                          ),
+                          onPressed: () {
+                            _sourcetoarray(_source);
+                            main(exell);
+                          },
+                          child: Text('Export as excell'),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                          child: Text("Rows per page:"),
+                        ),
+                        if (_perPages.isNotEmpty)
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 15),
+                            child: DropdownButton<int>(
+                              value: _currentPerPage,
+                              items: _perPages
+                                  .map((e) => DropdownMenuItem<int>(
+                                        child: Text("$e"),
+                                        value: e,
+                                      ))
+                                  .toList(),
+                              onChanged: (dynamic value) {
+                                setState(() {
+                                  _currentPerPage = value;
+                                  _currentPage = 1;
+                                  _resetData();
+                                });
+                              },
+                              isExpanded: false,
+                            ),
+                          ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                          child: Text(
+                              "$_currentPage - $_currentPerPage of $_total"),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.arrow_back_ios,
+                            size: 16,
+                          ),
+                          onPressed: _currentPage == 1
+                              ? null
+                              : () {
+                                  var _nextSet =
+                                      _currentPage - _currentPerPage!;
+                                  setState(() {
+                                    _currentPage = _nextSet > 1 ? _nextSet : 1;
+                                    _resetData(start: _currentPage - 1);
+                                  });
+                                },
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.arrow_forward_ios, size: 16),
+                          onPressed:
+                              _currentPage + _currentPerPage! - 1 > _total!
+                                  ? null
+                                  : () {
+                                      var _nextSet =
+                                          _currentPage + _currentPerPage!;
+
+                                      setState(() {
+                                        _currentPage = _nextSet < _total!
+                                            ? _nextSet
+                                            : _total! - _currentPerPage!;
+                                        _resetData(start: _nextSet - 1);
+                                      });
+                                    },
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                        )
+                      ],
+                      headerDecoration: BoxDecoration(
+                        color: Colors.blue,
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: Colors.blue,
+                      ),
+                      headerTextStyle: TextStyle(color: Colors.white),
+                      rowTextStyle: TextStyle(color: Colors.black),
+                      selectedTextStyle: TextStyle(color: Colors.white),
+                    ),
                   ),
-                  selectedDecoration: BoxDecoration(
-                    color: Colors.blue,
-                  ),
-                  headerTextStyle: TextStyle(color: Colors.white),
-                  rowTextStyle: TextStyle(color: Colors.black),
-                  selectedTextStyle: TextStyle(color: Colors.white),
                 ),
-              ),
+                ElevatedButton(
+                  child: const Text('show SQL querry'),
+                  onPressed: () {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return SizedBox(
+                          height: 200,
+                          child: Center(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                TextField(
+                                  maxLines: null,
+                                  controller: controller_
+                                    ..text = widget.sql_querry
+                                        .replaceAll('\\n', '\n'),
+                                  onChanged: (text) => {
+                                    widget.sql_querry =
+                                        controller_.text.toString()
+                                  },
+                                ),
+                                ElevatedButton(
+                                    child: const Text('get new data'),
+                                    onPressed: () {
+                                      setState(() {
+                                        widget.sqlData = [
+                                          {
+                                            "rengi": "beyaz",
+                                            "userID": "0",
+                                            "userName": "celal",
+                                            "password": "Esyc",
+                                            "lvl": "admin",
+                                            "birimID": "1"
+                                          },
+                                          {
+                                            "rengi": "beyaz",
+                                            "userID": "0",
+                                            "userName": "songül",
+                                            "password": "Esyc",
+                                            "lvl": "admin",
+                                            "birimID": "1"
+                                          },
+                                          {
+                                            "rengi": "beyaz",
+                                            "userID": "0",
+                                            "userName": "songül",
+                                            "password": "Esyc",
+                                            "lvl": "admin",
+                                            "birimID": "1"
+                                          },
+                                          {
+                                            "rengi": "beyaz",
+                                            "userID": "0",
+                                            "userName": "songül",
+                                            "password": "Esyc",
+                                            "lvl": "admin",
+                                            "birimID": "1"
+                                          },
+                                          {
+                                            "rengi": "beyaz",
+                                            "userID": "0",
+                                            "userName": "songül",
+                                            "password": "Esyc",
+                                            "lvl": "admin",
+                                            "birimID": "1"
+                                          },
+                                          {
+                                            "rengi": "demo1",
+                                            "userID": "0",
+                                            "userName": "ertuğrul",
+                                            "password": "Esy",
+                                            "lvl": "admin",
+                                            "birimID": "1"
+                                          }
+                                        ];
+
+                                        _initializeData();
+                                        Navigator.pop(context);
+                                      });
+                                    }),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                )
+              ],
             ),
           ])),
     );

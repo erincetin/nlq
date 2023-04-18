@@ -12,6 +12,9 @@ class SqlQueryListViewBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<TextEditingController> controller_ = [
+      for (int i = 1; i < 75; i++) TextEditingController()
+    ];
     return ListView(
       padding: const EdgeInsets.all(8),
       children: List.generate(
@@ -21,30 +24,42 @@ class SqlQueryListViewBuilder extends StatelessWidget {
             Expanded(
               child: Container(
                 child: ListTile(
-                  title: Text(queries[queries.length - index - 1]),
+                  title: TextField(
+                    maxLines: null,
+                    controller: controller_[queries.length - index - 1]
+                      ..text = queries[queries.length - index - 1]
+                          .replaceAll('\\n', '\n'),
+                    onChanged: (text) => {
+                      queries[queries.length - index - 1] =
+                          controller_[queries.length - index - 1]
+                              .text
+                              .toString()
+                    },
+                  ),
                 ),
-                width: 800,
+                width: 1000,
               ),
             ),
-            Expanded(
-              child: Container(
-                width: 200,
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  style: ButtonStyle(
-                    foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.black),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              DataPage(sqlData: data[data.length - index - 1])),
-                    );
-                  },
-                  child: const Text('Show data'),
+            Container(
+              width: 100,
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                style: ButtonStyle(
+                  foregroundColor:
+                      MaterialStateProperty.all<Color>(Colors.black),
                 ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => DataPage(
+                              sqlData: data[data.length - index - 1],
+                              sql_querry: queries[queries.length - index - 1]
+                                  .toString(),
+                            )),
+                  );
+                },
+                child: const Text('Show data'),
               ),
             )
           ],
