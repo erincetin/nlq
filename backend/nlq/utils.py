@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from backend.backend import settings
+from django.conf import settings
 
 
 # from backend import settings
