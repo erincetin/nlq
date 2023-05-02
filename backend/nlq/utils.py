@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-
+import openai
 from django.conf import settings
+from pymongo import MongoClient
 
 
 # from backend import settings
@@ -41,6 +42,16 @@ def database_info(db_type, username, password, hostname, database):
         db_info = oracle_info(username, password, hostname, database)
 
     return db_info
+
+
+def connect_nosql_db(db_type, username, password):
+    connection_string = ""
+    # "mongodb+srv://<user>:<password>@<cluster-url>?retryWrites=true&writeConcern=majority"
+
+    if db_type == 'mongodb':
+        client = MongoClient(connection_string)
+
+    return client
 
 
 def get_sql(query):
@@ -83,7 +94,7 @@ def postgresql_info(username, password, hostname, database):
         n_table = {"table_schema": table[0], 'table_name': table[1],
                    "columns": postgres_get_column_info(engine, table[0], table[1])}
         tables_dict.append(n_table)
-
+    engine.close()
     db_info_string = make_info_string(tables_dict)
     return db_info_string
 
@@ -104,7 +115,7 @@ def mysql_mssql_info(username, password, hostname, database, d_type):
         n_table = {"table_schema": table[0], 'table_name': table[1],
                    "columns": mysql_mssql_get_column_info(engine, table[0], table[1])}
         tables_dict.append(n_table)
-
+    engine.close()
     db_info_string = make_info_string(tables_dict)
     return db_info_string
 
@@ -122,7 +133,7 @@ def oracle_info(username, password, hostname, database):
         n_table = {"table_schema": table[0], 'table_name': table[1],
                    "columns": oracle_get_column_info(engine, table[1])}
         tables_dict.append(n_table)
-
+    engine.close()
     db_info_string = make_info_string(tables_dict)
     return db_info_string
 

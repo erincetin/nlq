@@ -4,7 +4,7 @@ import json
 import requests
 import psycopg2
 import psycopg2.extras
-from .utils import connect_sql_db, get_sql, database_info
+from .utils import connect_sql_db, get_sql, database_info, connect_nosql_db
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -50,6 +50,25 @@ def get_sql_query(request):
     engine = connect_sql_db('postgresql', username, password, hostname, database)
     """
 
+    return JsonResponse({
+        "query": query
+    })
+
+
+def query_result(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Wrong method"}, status=405
+        )
+
+    data = json.loads(request.body)
+    query = data.get("query")
+    hostname = data.get("hostname")
+    database = data.get("database")
+    username = data.get("username")
+    password = data.get("password")
+    database_type = data.get("database_type")
+
     engine = connect_sql_db(database_type, username, password, hostname, database)
     cursor = engine.raw_connection().cursor()
     cursor.execute(query)
@@ -58,8 +77,33 @@ def get_sql_query(request):
     engine.close()
 
     return JsonResponse({
-        "query": query,
         "data": result
     })
 
 
+# Will change
+def nosql_query(request):
+    # After  checking with talha this function will be changed to something similar in text_ada_mongo.ipynb
+    # I require more insight to functionalities of openai
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Wrong method"}, status=405
+        )
+
+    data = json.loads(request.body)
+    query = data.get("query")
+    db_name = data.get("database")
+    collection = data.get("collection")
+    username = data.get("username")
+    password = data.get("password")
+    database_type = data.get("database_type")
+
+    client = connect_nosql_db(database_type, username, password)  # will change
+    db = client.db_name
+    # collection = db.<coll_name> collections are like tables
+    result = db.find(query)
+
+    client.close()
+    return JsonResponse({
+        "data": result
+    })
