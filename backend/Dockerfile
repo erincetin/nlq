@@ -1,5 +1,5 @@
-#FROM python:3.8
-FROM python:3.8-slim-buster
+FROM python:3.8
+#FROM python:3.8-slim-buster
 
 ENV PYTHONUNBUFFERED 1
 
@@ -11,9 +11,9 @@ RUN apt-get update
 
 RUN apt-get upgrade -y
 
-RUN apt-get install gcc -y
+#RUN apt-get install gcc -y
 
-RUN apt-get -y install libldap2-dev libsasl2-dev
+#RUN apt-get -y install libldap2-dev libsasl2-dev
 
 RUN pip3 install -r requirements.txt
 
