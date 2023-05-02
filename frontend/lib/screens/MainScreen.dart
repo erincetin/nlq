@@ -188,8 +188,13 @@ class _MainScreenState extends State<MainScreen> {
         title: const Text('Demo for nl2sql app'),
         actions: <Widget>[
           TextButton(
+            autofocus: true,
+            focusNode: FocusNode(),
             style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              shape: BeveledRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0)),
+              backgroundColor: Colors.blue[700],
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               setState(() {
@@ -201,7 +206,7 @@ class _MainScreenState extends State<MainScreen> {
             child: const Text('Refresh page'),
           ),
           SizedBox(
-            width: 25,
+            width: 10,
           )
         ],
       ),
@@ -321,14 +326,39 @@ class _MainScreenState extends State<MainScreen> {
             SizedBox(
               height: 10,
             ),
-            TextButton(
-              style: ButtonStyle(
-                backgroundColor:
-                    MaterialStateProperty.all<Color>(Colors.blue.shade700),
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-              ),
-              onPressed: getSqlQueryHandler,
-              child: const Text('Sql sorgu'),
+            Row(
+              children: [
+                SizedBox(
+                  width: 500,
+                ),
+                TextButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.blue.shade700),
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.white),
+                  ),
+                  onPressed: getSqlQueryHandler,
+                  child: const Text('Sql sorgu'),
+                ),
+                SizedBox(
+                  width: 300,
+                ),
+                TextButton(
+                  style: ButtonStyle(
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.black),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isError = false;
+                      queryResults = [];
+                      queryData = [];
+                    });
+                  },
+                  child: const Text('Clear All'),
+                )
+              ],
             ),
             _isError
                 ? const Text("Connection refused, check your connection")
