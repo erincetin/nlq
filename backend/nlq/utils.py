@@ -73,7 +73,7 @@ def make_info_string(tables):
     for table in tables:
         db_info_string += table["table_name"] + " : "
         for column in table["columns"]:
-            db_info_string += column["column_name"] + ", "
+            db_info_string += column[0] + ", "
         db_info_string = db_info_string[:-2]
         db_info_string += " | "
     db_info_string = db_info_string[:-3]
