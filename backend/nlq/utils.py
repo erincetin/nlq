@@ -94,7 +94,7 @@ def postgresql_info(username, password, hostname, database):
         n_table = {"table_schema": table[0], 'table_name': table[1],
                    "columns": postgres_get_column_info(engine, table[0], table[1])}
         tables_dict.append(n_table)
-    engine.close()
+
     db_info_string = make_info_string(tables_dict)
     return db_info_string
 
@@ -115,7 +115,7 @@ def mysql_mssql_info(username, password, hostname, database, d_type):
         n_table = {"table_schema": table[0], 'table_name': table[1],
                    "columns": mysql_mssql_get_column_info(engine, table[0], table[1])}
         tables_dict.append(n_table)
-    engine.close()
+
     db_info_string = make_info_string(tables_dict)
     return db_info_string
 
@@ -133,7 +133,7 @@ def oracle_info(username, password, hostname, database):
         n_table = {"table_schema": table[0], 'table_name': table[1],
                    "columns": oracle_get_column_info(engine, table[1])}
         tables_dict.append(n_table)
-    engine.close()
+
     db_info_string = make_info_string(tables_dict)
     return db_info_string
 
