@@ -9,6 +9,12 @@ from pymongo import MongoClient
 # from django.conf import settings
 
 #
+
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+tokenizer = AutoTokenizer.from_pretrained("tscholak/2jrayxos")
+model = AutoModelForSeq2SeqLM.from_pretrained("tscholak/2jrayxos")
+
+
 def connect_sql_db(db_type, username, password, server, db):
     connection_string = f"://{username}:{password}@{server}/{db}"
 
@@ -57,14 +63,14 @@ def connect_nosql_db(db_type, username, password):
 def get_sql(query):
     input_text = query
 
-    features = settings.tokenizer([input_text], return_tensors='pt')
+    features = tokenizer([input_text], return_tensors='pt')
 
-    output = settings.model.generate(input_ids=features['input_ids'],
+    output = model.generate(input_ids=features['input_ids'],
                                      attention_mask=features['attention_mask'])
 
     print(query)
-    print(settings.tokenizer.decode(output[0]))
-    return settings.tokenizer.decode(output[0])
+    print(tokenizer.decode(output[0]))
+    return tokenizer.decode(output[0])
 
 
 def make_info_string(tables):
