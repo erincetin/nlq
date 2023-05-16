@@ -218,7 +218,7 @@ def mysql_mssql_get_column_info(engine, schema, table):
 
     query = "SELECT column_name " \
             "FROM information_schema.columns " \
-            "WHERE table_schema = %s And table_name = %s " \
+            "WHERE table_schema = '%s' And table_name = '%s' " \
             "ORDER BY ordinal_position" % (schema, table)
     cursor.execute(query)
     columns = cursor.fetchall()
