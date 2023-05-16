@@ -54,8 +54,8 @@ def get_sql_query(request):
         "query": query
     })
 
-
-def query_result(request):
+@csrf_exempt
+def get_query_result(request):
     if request.method != "POST":
         return JsonResponse(
             {"status": "error", "message": "Wrong method"}, status=405
@@ -69,16 +69,30 @@ def query_result(request):
     password = data.get("password")
     database_type = data.get("database_type")
 
-    engine = connect_sql_db(database_type, username, password, hostname, database)
-    cursor = engine.raw_connection().cursor()
-    cursor.execute(query)
-    result = cursor.fetchall()
-    cursor.close()
-    engine.close()
+    try:
+        engine = connect_sql_db(database_type, username, password, hostname, database)
+        connection = engine.connect()
+        result = connection.execute(f"select a.* from ({query}) a limit 1000")
 
-    return JsonResponse({
-        "data": result
-    })
+        columns = [col for col in result.keys()]
+        data = [list(res) for res in result.fetchall()]
+
+        # print(type(data), type(data[0]))
+        response = {
+            "success": True,
+            "columns": columns,
+            "data": data
+        }
+        return JsonResponse(response)
+    except Exception as e:
+        print(e)
+        response = {
+            "success": False,
+            "columns": [],
+            "data": []
+        }
+        return JsonResponse(response)
+
 
 
 # Will change
