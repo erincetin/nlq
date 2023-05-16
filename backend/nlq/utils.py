@@ -11,8 +11,8 @@ from pymongo import MongoClient
 #
 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-tokenizer = None#AutoTokenizer.from_pretrained("tscholak/2jrayxos")
-model = None #AutoModelForSeq2SeqLM.from_pretrained("tscholak/2jrayxos")
+tokenizer = AutoTokenizer.from_pretrained("tscholak/2jrayxos")
+model = AutoModelForSeq2SeqLM.from_pretrained("tscholak/2jrayxos")
 
 
 def connect_sql_db(db_type, username, password, server, db):
