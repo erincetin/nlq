@@ -18,32 +18,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  List<Map<String, dynamic>> demo1 = [
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "celal",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "songül",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "demo1",
-      "userID": "0",
-      "userName": "ertuğrul",
-      "password": "Esy",
-      "lvl": "admin",
-      "birimID": "1"
-    }
-  ];
+  List<Map<String, dynamic>> demo1 = [];
   List<Map<String, dynamic>> demo2 = [
     {
       "rengi": "beyaz",
@@ -115,6 +90,56 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  Future<void> getdataHandler(String sql) async {
+    http.Response response;
+    try {
+      response = await http.post(Uri.parse(ApiUrl.getData),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'query': sql,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type': "postgresql",
+          }));
+
+      if (response.statusCode == 200) {
+        decoded = jsonDecode(response.body);
+        if (decoded!["success"] == true) {
+          for (int j = 0; j < decoded!["data"].length; j++) {
+            Map<String, dynamic> tmp = {};
+            for (int i = 0; i < decoded!["columns"].length; i++) {
+              tmp.addAll({decoded!["columns"][i]: decoded!["data"][j][i]});
+            }
+            demo1.add(tmp);
+          }
+          setState(() => queryData.add(demo1));
+        } else {
+          queryData.add(demo1);
+        }
+      }
+    } catch (err) {
+      //Cannot connect to the server
+      setState(() => queryData.add(demo2));
+      print(err);
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
   Future<void> getSqlQueryHandler() async {
     setState(() {
       _isLoading = true;
@@ -123,61 +148,38 @@ class _MainScreenState extends State<MainScreen> {
 
     http.Response response;
     try {
-      response = await http.post(
-        Uri.parse(question == 'admin' ? link : ApiUrl.getQuery),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: question == 'admin'
-            ? jsonEncode({
-                'data': [link, database_format]
-              })
-            : jsonEncode({
-                'input': question,
-                'data': dropdownValue,
-                'server': Provider.of<connectionhandler>(context, listen: false)
-                    .Server,
-                'database':
-                    Provider.of<connectionhandler>(context, listen: false).Port,
-                'username':
-                    Provider.of<connectionhandler>(context, listen: false)
-                        .Username,
-                'password':
-                    Provider.of<connectionhandler>(context, listen: false)
-                        .Password
-              }),
-      );
+      response = await http.post(Uri.parse(ApiUrl.getQuery),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'input': question,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type': "postgresql",
+          }));
 
       if (response.statusCode == 200) {
         decoded = jsonDecode(response.body);
-        queryResults
-            .add(decoded![question == 'admin' ? 'data' : 'query'].toString());
-        queryData.add(question == 'admin' ? demo1 : decoded!['data']);
+        setState(() => queryResults.add(decoded!["query"].toString()));
+        getdataHandler(decoded!["query"].toString());
       }
     } catch (err) {
       //Cannot connect to the server
       setState(() => _isError = true);
-      setState(() => queryResults.add(jsonEncode({
-            'input': question == 'admin' ? admin_question : question,
-            'database_format': question == 'admin' ? database_format : '\n',
-            'data': dropdownValue,
-            'server':
-                Provider.of<connectionhandler>(context, listen: false).Server,
-            'database':
-                Provider.of<connectionhandler>(context, listen: false).Port,
-            'username':
-                Provider.of<connectionhandler>(context, listen: false).Username,
-            'password':
-                Provider.of<connectionhandler>(context, listen: false).Password
-          })));
-      setState(() =>
-          queryData.isNotEmpty ? queryData.add(demo1) : queryData.add(demo2));
-      print(err);
+      setState(() => queryResults.add(err.toString()));
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override

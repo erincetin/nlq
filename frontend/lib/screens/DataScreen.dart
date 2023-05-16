@@ -1,9 +1,15 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/Classes/connectionhandler.dart';
+import 'package:frontend/apiUrls.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 import 'package:responsive_table/responsive_table.dart';
 
 class DataPage extends StatefulWidget {
@@ -22,7 +28,7 @@ class _DataPageState extends State<DataPage> {
   int? _currentPerPage = 10;
   List<bool>? _expanded;
   String? _searchKey = "id";
-
+  List<Map<String, dynamic>> demo1 = [];
   int _currentPage = 1;
   bool _isSearch = false;
   List<Map<String, dynamic>> _sourceOriginal = [];
@@ -31,7 +37,7 @@ class _DataPageState extends State<DataPage> {
   List<Map<String, dynamic>> _selecteds = [];
   // ignore: unused_field
   String _selectableKey = "id";
-
+  Map<String, dynamic>? decoded;
   String? _sortColumn;
   bool _sortAscending = true;
   bool _isLoading = true;
@@ -39,6 +45,52 @@ class _DataPageState extends State<DataPage> {
   var random = new Random();
   List<String> exell = [];
   TextEditingController controller_ = TextEditingController();
+  Future<void> getdataHandler(BuildContext context, String sql) async {
+    http.Response response;
+    try {
+      response = await http.post(Uri.parse(ApiUrl.getData),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'query': sql,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type': "postgresql",
+          }));
+
+      if (response.statusCode == 200) {
+        decoded = jsonDecode(response.body);
+        if (decoded!["success"] == true) {
+          for (int j = 0; j < decoded!["data"].length; j++) {
+            Map<String, dynamic> tmp = {};
+            for (int i = 0; i < decoded!["columns"].length; i++) {
+              tmp.addAll({decoded!["columns"][i]: decoded!["data"][j][i]});
+            }
+            demo1.add(tmp);
+          }
+          setState(() => widget.sqlData = demo1);
+        } else {}
+      }
+    } catch (err) {
+      //Cannot connect to the server
+      print(err);
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   List<Map<String, dynamic>> _generateData({int n: 100}) {
     List<Map<String, dynamic>> temps = [];
@@ -375,59 +427,9 @@ class _DataPageState extends State<DataPage> {
                                     child: const Text('get new data'),
                                     onPressed: () {
                                       setState(() {
-                                        widget.sqlData = [
-                                          {
-                                            "rengi": "beyaz",
-                                            "userID": "0",
-                                            "userName": "celal",
-                                            "password": "Esyc",
-                                            "lvl": "admin",
-                                            "birimID": "1"
-                                          },
-                                          {
-                                            "rengi": "beyaz",
-                                            "userID": "0",
-                                            "userName": "songül",
-                                            "password": "Esyc",
-                                            "lvl": "admin",
-                                            "birimID": "1"
-                                          },
-                                          {
-                                            "rengi": "beyaz",
-                                            "userID": "0",
-                                            "userName": "songül",
-                                            "password": "Esyc",
-                                            "lvl": "admin",
-                                            "birimID": "1"
-                                          },
-                                          {
-                                            "rengi": "beyaz",
-                                            "userID": "0",
-                                            "userName": "songül",
-                                            "password": "Esyc",
-                                            "lvl": "admin",
-                                            "birimID": "1"
-                                          },
-                                          {
-                                            "rengi": "beyaz",
-                                            "userID": "0",
-                                            "userName": "songül",
-                                            "password": "Esyc",
-                                            "lvl": "admin",
-                                            "birimID": "1"
-                                          },
-                                          {
-                                            "rengi": "demo1",
-                                            "userID": "0",
-                                            "userName": "ertuğrul",
-                                            "password": "Esy",
-                                            "lvl": "admin",
-                                            "birimID": "1"
-                                          }
-                                        ];
-
+                                        getdataHandler(context,
+                                            controller_.text.toString());
                                         _initializeData();
-                                        Navigator.pop(context);
                                       });
                                     }),
                               ],
