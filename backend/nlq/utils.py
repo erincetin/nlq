@@ -23,7 +23,6 @@ def connect_sql_db(db_type, username, password, server, db):
 
     elif db_type == 'postgresql':
         connection_string = "postgresql+psycopg2" + connection_string
-
     elif db_type == 'mssql':
         connection_string = "mssql+pymssql" + connection_string
     elif db_type == 'oracle':
@@ -46,18 +45,24 @@ def database_info(db_type, username, password, hostname, database):
         db_info = mysql_mssql_info(username, password, hostname, database, 1)
     elif db_type == 'oracle':
         db_info = oracle_info(username, password, hostname, database)
+    elif db_type == 'mongodb':
+        db_info = mongo_info(username, password, hostname, database)
 
     return db_info
 
 
-def connect_nosql_db(db_type, username, password):
-    connection_string = ""
-    # "mongodb+srv://<user>:<password>@<cluster-url>?retryWrites=true&writeConcern=majority"
+def connect_nosql_db(db_type, username, password, server, db):
+
+    connection_string = f"://{username}:{password}@{server}/{db}"
+    # "mongodb+srv://<user>:<password>@<cluster-url>\database"
 
     if db_type == 'mongodb':
+        connection_string = "mongodb+svr" + connection_string
         client = MongoClient(connection_string)
+        db = client[db]
 
-    return client
+    # returns might change if we are going to use different databases
+    return db
 
 
 def get_sql(query):
@@ -74,7 +79,7 @@ def get_sql(query):
 
 
 def make_info_string(tables):
-    # this tables[0] can be not working as intended
+
     db_info_string = " | " + tables[0]["table_schema"] + " | "
     for table in tables:
         db_info_string += table["table_name"] + " : "
@@ -86,6 +91,21 @@ def make_info_string(tables):
     print(db_info_string)
     return db_info_string
 
+
+def mongo_info(username, password, hostname, database):
+    db = connect_nosql_db('mongodb', username, password, hostname, database)
+
+    collections = db.list_collection_names()
+
+    # this is a temperory since it doesn@t take nests in mind
+    # I will look in to variety (mongodb db  schema analyzer for this)
+    fields = []
+    for collection in collections:
+        table = { 'table_name': collection,
+                   "columns": db['collection'].keys() }
+        fields.append(table)
+
+    return fields
 
 def postgresql_info(username, password, hostname, database):
     engine = connect_sql_db('postgresql', username, password, hostname, database)
