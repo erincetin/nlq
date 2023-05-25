@@ -4,13 +4,13 @@ import openai
 from django.conf import settings
 from pymongo import MongoClient
 
-
 # from backend import settings
 # from django.conf import settings
 
 #
 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
 tokenizer = AutoTokenizer.from_pretrained("tscholak/2jrayxos")
 model = AutoModelForSeq2SeqLM.from_pretrained("tscholak/2jrayxos")
 
@@ -45,24 +45,21 @@ def database_info(db_type, username, password, hostname, database):
         db_info = mysql_mssql_info(username, password, hostname, database, 1)
     elif db_type == 'oracle':
         db_info = oracle_info(username, password, hostname, database)
-    elif db_type == 'mongodb':
-        db_info = mongo_info(username, password, hostname, database)
 
     return db_info
 
 
 def connect_nosql_db(db_type, username, password, server, db):
-
     connection_string = f"://{username}:{password}@{server}/{db}"
     # "mongodb+srv://<user>:<password>@<cluster-url>\database"
 
     if db_type == 'mongodb':
         connection_string = "mongodb+svr" + connection_string
         client = MongoClient(connection_string)
-        db = client[db]
+
 
     # returns might change if we are going to use different databases
-    return db
+    return client
 
 
 def get_sql(query):
@@ -71,7 +68,7 @@ def get_sql(query):
     features = tokenizer([input_text], return_tensors='pt')
 
     output = model.generate(input_ids=features['input_ids'],
-                                     attention_mask=features['attention_mask'])
+                            attention_mask=features['attention_mask'])
 
     print(query)
     print(tokenizer.decode(output[0]))
@@ -79,7 +76,6 @@ def get_sql(query):
 
 
 def make_info_string(tables):
-
     db_info_string = " | " + tables[0]["table_schema"] + " | "
     for table in tables:
         db_info_string += table["table_name"] + " : "
@@ -92,20 +88,20 @@ def make_info_string(tables):
     return db_info_string
 
 
-def mongo_info(username, password, hostname, database):
-    db = connect_nosql_db('mongodb', username, password, hostname, database)
+def mongo_query_gen(username, password, hostname, database, collection):
+    query = ''
+    try:
+        db = connect_nosql_db('mongodb', username, password, hostname, database)
+        coll = db[collection]
+        samples = coll.aggregate({'$sample': {'size': 3}})
+        # send to query mls api to get query
+        db.close()
+        return query
 
-    collections = db.list_collection_names()
+    except Exception as e:
+        print(e)
+        return query
 
-    # this is a temperory since it doesn@t take nests in mind
-    # I will look in to variety (mongodb db  schema analyzer for this)
-    fields = []
-    for collection in collections:
-        table = { 'table_name': collection,
-                   "columns": db['collection'].keys() }
-        fields.append(table)
-
-    return fields
 
 def postgresql_info(username, password, hostname, database):
     engine = connect_sql_db('postgresql', username, password, hostname, database)

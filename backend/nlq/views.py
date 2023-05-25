@@ -4,7 +4,7 @@ import json
 import requests
 import psycopg2
 import psycopg2.extras
-from .utils import connect_sql_db, get_sql, database_info, connect_nosql_db
+from .utils import connect_sql_db, get_sql, database_info, connect_nosql_db, mongo_query_gen
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -81,6 +81,37 @@ def get_query_result(request):
         return JsonResponse(response)
 
 
+# get collection names to user since they may not have these
+def nosql_collections(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Wrong method"}, status=405
+        )
+
+    data = json.loads(request.body)
+    hostname = data.get("hostname")
+    database = data.get("database")
+    username = data.get("username")
+    password = data.get("password")
+    database_type = data.get("database_type")
+    try:
+        db = connect_nosql_db(database_type, username, password, hostname, database)
+        coll_names = db.list_collection_names()
+        db.close()
+        response = {
+            "success": True,
+            "result": coll_names
+        }
+        return JsonResponse(response)
+    except Exception as e:
+        print(e)
+        response = {
+            "success": False,
+            "result": []
+        }
+        return JsonResponse(response)
+
+
 # Will change
 def nosql_query(request):
     # After  checking with talha this function will be changed to something similar in text_ada_mongo.ipynb
@@ -91,20 +122,18 @@ def nosql_query(request):
         )
 
     data = json.loads(request.body)
-    #    collection = data.get("collection")
+
     hostname = data.get("hostname")
     database = data.get("database")
     username = data.get("username")
     password = data.get("password")
+    collection = data.get("collection")
     database_type = data.get("database_type")
-    # will change
-    db_info = database_info(database_type, username, password, hostname, database)
-    # collection = db.<coll_name> collections are like tables
 
-    # there will be a query generator here
-    # will use openai api like talhas submit in the last issue
+    query = mongo_query_gen(database_type, username, password, hostname, database, collection)
+
     return JsonResponse({
-        "query": "query"
+        "query": query
     })
 
 
@@ -120,18 +149,21 @@ def nosql_query_result(request):
     database = data.get("database")
     username = data.get("username")
     password = data.get("password")
+    collection = data.get("collection")
     database_type = data.get("database_type")
 
     try:
         db = connect_nosql_db(database_type, username, password, hostname, database)
-        result = db.find(query)
+        coll = db[collection]
+        result = coll.find(query)
+        db.close()
 
-        # print(type(data), type(data[0]))
         response = {
             "success": True,
             "result": result
         }
         return JsonResponse(response)
+
     except Exception as e:
         print(e)
         response = {
