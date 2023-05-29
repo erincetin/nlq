@@ -43,7 +43,7 @@ class SideBar extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.verified_user),
-              title: const Text('DATABASE'),
+              title: const Text('Database'),
               onTap: () => {
                 Navigator.push(
                     context,
@@ -51,21 +51,6 @@ class SideBar extends StatelessWidget {
                       builder: (context) => DatabaseConnectionScreen(),
                     ))
               },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () => {Navigator.of(context).pop()},
-            ),
-            ListTile(
-              leading: const Icon(Icons.border_color),
-              title: const Text('Feedback'),
-              onTap: () => {Navigator.of(context).pop()},
-            ),
-            ListTile(
-              leading: const Icon(Icons.exit_to_app),
-              title: const Text('Logout'),
-              onTap: () => {Navigator.of(context).pop()},
             ),
           ],
         ),

@@ -22,6 +22,8 @@ class DataPage extends StatefulWidget {
 }
 
 class _DataPageState extends State<DataPage> {
+  TextEditingController _text = TextEditingController();
+  late String excel_name = '';
   late List<DatatableHeader> _headers;
   List<int> _perPages = [10, 20, 50, 100];
   int? _total;
@@ -41,7 +43,7 @@ class _DataPageState extends State<DataPage> {
   String? _sortColumn;
   bool _sortAscending = true;
   bool _isLoading = true;
-  bool _showSelect = true;
+
   var random = new Random();
   List<String> exell = [];
   TextEditingController controller_ = TextEditingController();
@@ -70,6 +72,14 @@ class _DataPageState extends State<DataPage> {
             'database_type': "postgresql",
           }));
 
+      setState(() {
+        demo1 = [];
+        _sourceOriginal = [];
+        _sourceFiltered = [];
+        _source = [];
+        _selecteds = [];
+        widget.sqlData = [];
+      });
       if (response.statusCode == 200) {
         decoded = jsonDecode(response.body);
         if (decoded!["success"] == true) {
@@ -90,6 +100,16 @@ class _DataPageState extends State<DataPage> {
     setState(() {
       _isLoading = false;
     });
+
+    _headers = [];
+    for (int i = 0; i < widget.sqlData[0].keys.toList().length; i++) {
+      _headers.add(DatatableHeader(
+          text: widget.sqlData[0].keys.toList()[i].toString(),
+          value: widget.sqlData[0].keys.toList()[i].toString(),
+          show: true,
+          sortable: true,
+          textAlign: TextAlign.center));
+    }
   }
 
   List<Map<String, dynamic>> _generateData({int n: 100}) {
@@ -175,6 +195,7 @@ class _DataPageState extends State<DataPage> {
 
   @override
   void initState() {
+    getdataHandler(this.context, widget.sql_querry);
     _total = widget.sqlData.length;
     super.initState();
     _headers = [];
@@ -201,7 +222,10 @@ class _DataPageState extends State<DataPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("DATA TABLE"),
+        title: Text(Provider.of<connectionhandler>(this.context, listen: false)
+            .dataname
+            .toUpperCase()
+            .toString()),
         actions: [
           IconButton(
             onPressed: _initializeData,
@@ -276,9 +300,7 @@ class _DataPageState extends State<DataPage> {
                         /// print(value);
                         /// print(header);
                       },
-                      onTabRow: (data) {
-                        print(data);
-                      },
+                      onTabRow: (data) {},
                       onSort: (value) {
                         setState(() => _isLoading = true);
 
@@ -315,11 +337,10 @@ class _DataPageState extends State<DataPage> {
                             foregroundColor:
                                 MaterialStateProperty.all<Color>(Colors.white),
                           ),
-                          onPressed: () {
-                            _sourcetoarray(_source);
-                            main(exell);
+                          onPressed: () async {
+                            showAlertDialog(this.context);
                           },
-                          child: Text('Export as excell'),
+                          child: Text('Export as Excel'),
                         ),
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 15),
@@ -400,7 +421,7 @@ class _DataPageState extends State<DataPage> {
                   ),
                 ),
                 ElevatedButton(
-                  child: const Text('show SQL querry'),
+                  child: const Text('Show the Query'),
                   onPressed: () {
                     showModalBottomSheet<void>(
                       context: context,
@@ -424,12 +445,13 @@ class _DataPageState extends State<DataPage> {
                                   },
                                 ),
                                 ElevatedButton(
-                                    child: const Text('get new data'),
+                                    child: const Text('Query Again'),
                                     onPressed: () {
                                       setState(() {
                                         getdataHandler(context,
                                             controller_.text.toString());
                                         _initializeData();
+                                        _resetData();
                                       });
                                     }),
                               ],
@@ -548,13 +570,15 @@ class _DataPageState extends State<DataPage> {
     for (int i = 0; i < widget.sqlData[0].keys.toList().length; i++) {
       list2.add(widget.sqlData[0].keys.toList()[i]);
     }
+    list.add(list2);
     list2 = [];
     for (var data in widget.sqlData) {
       for (var sei in data.values.toList()) {
         list2.add(sei.toString());
       }
-      list2 = [];
+
       list.add(list2);
+      list2 = [];
     }
 
     print('list creation executed in ${stopwatch.elapsed}');
@@ -584,19 +608,50 @@ class _DataPageState extends State<DataPage> {
       ))
         ..value = colValue;
     });
-
-    // Saving the file
-
-    String outputFile = Directory.current.path + "/r.xlsx";
-
-    //stopwatch.reset();
+    String outputFile =
+        Directory.current.path + "/" + await excel_name + ".csv";
     List<int>? fileBytes = excel.save();
-    //print('saving executed in ${stopwatch.elapsed}');
     if (fileBytes != null) {
       File(join(outputFile))
         ..createSync(recursive: true)
         ..writeAsBytesSync(fileBytes);
     }
+  }
+
+  showAlertDialog(BuildContext context) async {
+    // set up the button
+    Widget okButton = TextButton(
+      child: Text("Save"),
+      onPressed: () {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        _sourcetoarray(_source);
+        main(exell);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Please enter name of Excel file"),
+      content: TextField(
+        controller: _text,
+        onChanged: (value) {
+          setState(() {
+            excel_name = _text.text.toString();
+          });
+        },
+      ),
+      actions: [
+        okButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 }
 
@@ -609,9 +664,17 @@ class _DropDownContainer extends StatelessWidget {
     List<Widget> _children = data.entries.map<Widget>((entry) {
       Widget w = Row(
         children: [
-          Text(entry.key.toString()),
+          SelectableText(
+            entry.key.toString(),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           Spacer(),
-          Text(entry.value.toString()),
+          SelectableText(
+            entry.value.toString(),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ],
       );
       return w;

@@ -19,6 +19,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<Map<String, dynamic>> demo1 = [];
+
   List<Map<String, dynamic>> demo2 = [
     {
       "rengi": "beyaz",
@@ -59,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _isLoading = false;
   bool _isError = false;
 
-  static String dropdownValue = 'ORACLE';
+  static String dropdownValue = 'Sqlite';
   Map<String, dynamic>? decoded;
 
   static List<String> queryResults = [];
@@ -112,7 +113,7 @@ class _MainScreenState extends State<MainScreen> {
                 Provider.of<connectionhandler>(context, listen: false).Password,
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
-            'database_type': "postgresql",
+            'database_type': dropdownValue.toLowerCase().toString(),
           }));
 
       if (response.statusCode == 200) {
@@ -167,7 +168,7 @@ class _MainScreenState extends State<MainScreen> {
                 Provider.of<connectionhandler>(context, listen: false).Password,
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
-            'database_type': "postgresql",
+            'database_type': dropdownValue.toLowerCase().toString(),
           }));
 
       if (response.statusCode == 200) {
@@ -180,6 +181,9 @@ class _MainScreenState extends State<MainScreen> {
       setState(() => _isError = true);
       setState(() => queryResults.add(err.toString()));
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -187,7 +191,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Demo for nl2sql app'),
+        title: const Text('NLQ'),
         actions: <Widget>[
           TextButton(
             autofocus: true,
@@ -272,12 +276,13 @@ class _MainScreenState extends State<MainScreen> {
                   width: 15,
                 ),
                 Container(
+                  width: 150,
                   decoration: BoxDecoration(
                       color: Colors.blue[100]!,
                       border: Border.all(
                         color: Colors.blue[400]!,
                       ),
-                      borderRadius: BorderRadius.all(Radius.circular(20))),
+                      borderRadius: BorderRadius.all(Radius.circular(22))),
                   height: 40,
                   alignment: Alignment.center,
                   child: Text(
@@ -328,58 +333,85 @@ class _MainScreenState extends State<MainScreen> {
             SizedBox(
               height: 10,
             ),
-            Row(
+            Stack(
+              alignment: Alignment.center,
               children: [
-                SizedBox(
-                  width: 500,
-                ),
-                TextButton(
-                  style: ButtonStyle(
-                    backgroundColor:
-                        MaterialStateProperty.all<Color>(Colors.blue.shade700),
-                    foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
+                Align(
+                  alignment: Alignment.center,
+                  child: TextButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Colors.blue.shade700),
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Colors.white),
+                    ),
+                    onPressed: () {
+                      question == ''
+                          ? showAlertDialog(context)
+                          : getSqlQueryHandler();
+                    },
+                    child: const Text('Convert Query'),
                   ),
-                  onPressed: getSqlQueryHandler,
-                  child: const Text('Sql sorgu'),
                 ),
-                SizedBox(
-                  width: 300,
-                ),
-                TextButton(
-                  style: ButtonStyle(
-                    foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.black),
+                Align(
+                  alignment: Alignment.centerRight - Alignment(0.15, 0.15),
+                  child: TextButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Colors.blue.shade700),
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Colors.white),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isError = false;
+                        queryResults = [];
+                        queryData = [];
+                      });
+                    },
+                    child: const Text('Clear All'),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _isError = false;
-                      queryResults = [];
-                      queryData = [];
-                    });
-                  },
-                  child: const Text('Clear All'),
-                )
+                ),
               ],
             ),
             _isError
                 ? const Text("Connection refused, check your connection")
                 : const SizedBox.shrink(),
-            !_isLoading
-                ? Expanded(
-                    child: SqlQueryListViewBuilder(
-                      queries: queryResults,
-                      data: queryData,
-                    ),
-                  )
-                : const SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: CircularProgressIndicator(),
-                  ),
+            SqlQueryListViewBuilder(
+              queries: queryResults,
+              data: queryData,
+              isLoading: _isLoading,
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  showAlertDialog(BuildContext context) {
+    // set up the button
+    Widget okButton = TextButton(
+      child: Text("Error"),
+      onPressed: () {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Please ask your question"),
+      content: Text("Question is empty"),
+      actions: [
+        okButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
     );
   }
 }
