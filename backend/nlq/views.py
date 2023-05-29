@@ -133,6 +133,7 @@ def get_nosql_query(request):
     query = mongo_query_gen(username, password, hostname, database, collection, question)
 
     return JsonResponse({
+        "success": True,
         "query": query
     })
 
