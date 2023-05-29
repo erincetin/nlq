@@ -122,7 +122,7 @@ def get_nosql_query(request):
         )
 
     data = json.loads(request.body)
-
+    question = data.get("question")
     hostname = data.get("hostname")
     database = data.get("database")
     username = data.get("username")
@@ -130,7 +130,7 @@ def get_nosql_query(request):
     collection = data.get("collection")
     database_type = data.get("database_type")
 
-    query = mongo_query_gen(username, password, hostname, database, collection)
+    query = mongo_query_gen(username, password, hostname, database, collection, question)
 
     return JsonResponse({
         "query": query
