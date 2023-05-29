@@ -50,16 +50,31 @@ def database_info(db_type, username, password, hostname, database):
 
 
 def connect_nosql_db(db_type, username, password, server, db):
-    connection_string = f"://{username}:{password}@{server}/{db}"
+    connection_string = f"://{username}:{password}@{server}"
     # "mongodb+srv://<user>:<password>@<cluster-url>\database"
 
     if db_type == 'mongodb':
         connection_string = "mongodb+svr" + connection_string
         client = MongoClient(connection_string)
 
-
     # returns might change if we are going to use different databases
     return client
+
+
+def mongo_query_gen(username, password, hostname, database, collection):
+    query = ''
+    try:
+        client = connect_nosql_db('mongodb', username, password, hostname, database)
+        db = client[database]
+        coll = db[collection]
+        samples = coll.aggregate({'$sample': {'size': 3}})
+        # send to query mls api to get query
+        client.close()
+        return query
+
+    except Exception as e:
+        print(e)
+        return query
 
 
 def get_sql(query):
@@ -86,21 +101,6 @@ def make_info_string(tables):
     db_info_string = db_info_string[:-3]
     print(db_info_string)
     return db_info_string
-
-
-def mongo_query_gen(username, password, hostname, database, collection):
-    query = ''
-    try:
-        db = connect_nosql_db('mongodb', username, password, hostname, database)
-        coll = db[collection]
-        samples = coll.aggregate({'$sample': {'size': 3}})
-        # send to query mls api to get query
-        db.close()
-        return query
-
-    except Exception as e:
-        print(e)
-        return query
 
 
 def postgresql_info(username, password, hostname, database):

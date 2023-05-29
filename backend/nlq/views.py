@@ -82,7 +82,7 @@ def get_query_result(request):
 
 
 # get collection names to user since they may not have these
-def nosql_collections(request):
+def get_nosql_collections(request):
     if request.method != "POST":
         return JsonResponse(
             {"status": "error", "message": "Wrong method"}, status=405
@@ -95,9 +95,9 @@ def nosql_collections(request):
     password = data.get("password")
     database_type = data.get("database_type")
     try:
-        db = connect_nosql_db(database_type, username, password, hostname, database)
-        coll_names = db.list_collection_names()
-        db.close()
+        client = connect_nosql_db(database_type, username, password, hostname, database)
+        coll_names = client[database].list_collection_names()
+        client.close()
         response = {
             "success": True,
             "result": coll_names
@@ -113,7 +113,7 @@ def nosql_collections(request):
 
 
 # Will change
-def nosql_query(request):
+def get_nosql_query(request):
     # After  checking with talha this function will be changed to something similar in text_ada_mongo.ipynb
     # I require more insight to functionalities of openai
     if request.method != "POST":
@@ -130,14 +130,14 @@ def nosql_query(request):
     collection = data.get("collection")
     database_type = data.get("database_type")
 
-    query = mongo_query_gen(database_type, username, password, hostname, database, collection)
+    query = mongo_query_gen(username, password, hostname, database, collection)
 
     return JsonResponse({
         "query": query
     })
 
 
-def nosql_query_result(request):
+def get_nosql_query_result(request):
     if request.method != "POST":
         return JsonResponse(
             {"status": "error", "message": "Wrong method"}, status=405
@@ -153,7 +153,8 @@ def nosql_query_result(request):
     database_type = data.get("database_type")
 
     try:
-        db = connect_nosql_db(database_type, username, password, hostname, database)
+        client = connect_nosql_db(database_type, username, password, hostname, database)
+        db = client[database]
         coll = db[collection]
         result = coll.find(query)
         db.close()
