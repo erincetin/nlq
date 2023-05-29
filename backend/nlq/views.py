@@ -113,6 +113,7 @@ def get_nosql_collections(request):
 
 
 # Will change
+@csrf_exempt
 def get_nosql_query(request):
     # After  checking with talha this function will be changed to something similar in text_ada_mongo.ipynb
     # I require more insight to functionalities of openai
