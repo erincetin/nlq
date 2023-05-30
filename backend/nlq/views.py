@@ -162,7 +162,7 @@ def get_nosql_query_result(request):
         query_result = []
 
         for res in result:
-            res['_id'] = str(res['id'])
+            res['_id'] = str(res['_id'])
             query_result.append(res)
         client.close()
         response = {
