@@ -168,7 +168,7 @@ def get_nosql_query_result(request):
         response = {
             "success": True,
             "result": query_result,
-            "columns": query_result[0].keys() if len(query) > 0 else []
+            "columns": list(query_result[0].keys()) if len(query) > 0 else []
         }
         return JsonResponse(response)
 
