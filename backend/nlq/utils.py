@@ -53,10 +53,7 @@ def connect_sql_db(db_type, username, password, server, db):
     return engine
 
 
-# this function is returning the string to frontend for storage, and it will be required for the get_sql_function
 def database_info(db_type, username, password, hostname, database):
-    # this will most likely will be a put method but for now it will stay as post
-
     if db_type == 'mysql':
         db_info = mysql_mssql_info(username, password, hostname, database, 0)
     elif db_type == 'postgresql':
@@ -77,7 +74,6 @@ def connect_nosql_db(db_type, username, password, server, db):
         connection_string = "mongodb" + connection_string
         client = MongoClient(connection_string)
 
-    # returns might change if we are going to use different databases
     return client
 
 
@@ -107,14 +103,13 @@ def chat_fewshot_mongo(query, database):
     return response.content
 
 
-
 def mongo_query_gen(username, password, hostname, database, collection, question):
     try:
         client = connect_nosql_db('mongodb', username, password, hostname, database)
         db = client[database]
         coll = db[collection]
         samples = list(coll.aggregate([{'$sample': {'size': 3}}]))
-        # send to query mls api to get query
+
         client.close()
 
         for sample in samples:

@@ -112,11 +112,8 @@ def get_nosql_collections(request):
         return JsonResponse(response)
 
 
-# Will change
 @csrf_exempt
 def get_nosql_query(request):
-    # After  checking with talha this function will be changed to something similar in text_ada_mongo.ipynb
-    # I require more insight to functionalities of openai
     if request.method != "POST":
         return JsonResponse(
             {"status": "error", "message": "Wrong method"}, status=405
