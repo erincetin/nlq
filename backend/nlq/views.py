@@ -7,7 +7,7 @@ import psycopg2.extras
 from .utils import connect_sql_db, get_sql, database_info, connect_nosql_db, mongo_query_gen
 from django.views.decorators.csrf import csrf_exempt
 
-
+from sqlalchemy import create_engine, text
 # Create your views here.
 
 @csrf_exempt
@@ -59,7 +59,7 @@ def get_query_result(request):
     try:
         engine = connect_sql_db(database_type, username, password, hostname, database)
         connection = engine.connect()
-        result = connection.execute(f"select a.* from ({query}) a limit 1000")
+        result = connection.execute(text(f"select a.* from ({query}) a limit 1000"))
 
         columns = [col for col in result.keys()]
         data = [list(res) for res in result.fetchall()]
@@ -163,7 +163,7 @@ def get_nosql_query_result(request):
         for res in result:
             res['_id'] = str(res['id'])
             query_result.append(res)
-
+        client.close()
         response = {
             "success": True,
             "result": query_result,
