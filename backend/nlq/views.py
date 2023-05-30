@@ -136,6 +136,7 @@ def get_nosql_query(request):
     })
 
 
+@csrf_exempt
 def get_nosql_query_result(request):
     if request.method != "POST":
         return JsonResponse(
