@@ -81,22 +81,10 @@ def chat_fewshot_mongo(query, database):
     chat = ChatOpenAI(temperature=0)
     mongo_messages = []
     system = SystemMessage(
-        content="You are a MongoDB query generator for a database with the following collections and some samples from database are:\n\n\n" + database + "\n only return generated query. Do not explain anything. Query must be work on python")
+        content="You are a MongoDB query generator for a database with the following collections and some samples from database are:\n\n\n" + database + "\n only return generated query. Do not explain anything. Query must be work on python. Give only dictionary")
 
-    user_1 = HumanMessage(
-        content="List the names of the departments which employed more than 10 employees in the last 3 months.")
-    ai_1 = AIMessage(
-        content="db.Department.aggregate([\n  {\n    $lookup: {\n      from: \"Employee\",\n      localField: \"_id\",\n      foreignField: \"department_id\",\n      as: \"employees\"\n    }\n  },\n  {\n    $lookup: {\n      from: \"Salary_Payments\",\n      localField: \"employees._id\",\n      foreignField: \"employee_id\",\n      as: \"salary_payments\"\n    }\n  },\n  {\n    $match: {\n      \"salary_payments.date\": { $gte: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 90) }\n    }\n  },\n  {\n    $group: {\n      _id: \"$name\",\n      employeeCount: { $sum: 1 }\n    }\n  },\n  {\n    $match: {\n      employeeCount: { $gt: 10 }\n    }\n  },\n  {\n    $project: {\n      _id: 0,\n      department_name: \"$_id\"\n    }\n  }\n]);\n'''\n")
-    user_2 = HumanMessage(
-        content="List the names of the departments which employed more than 3 employees and has id less than 3400.")
-    ai_2 = AIMessage(
-        content="db.Department.aggregate([\n  {\n    $match: { _id: { $lt: 3400 } }\n  },\n  {\n    $lookup: {\n      from: \"Employee\",\n      localField: \"_id\",\n      foreignField: \"department_id\",\n      as: \"employees\"\n    }\n  },\n  {\n    $group: {\n      _id: \"$name\",\n      employeeCount: { $sum: { $size: \"$employees\" } }\n    }\n  },\n  {\n    $match: {\n      employeeCount: { $gt: 3 }\n    }\n  },\n  {\n    $project: {\n      _id: 0,\n      department_name: \"$_id\"\n    }\n  }\n]);\n'''")
     user = HumanMessage(content=query)
     mongo_messages.append(system)
-    mongo_messages.append(user_1)
-    mongo_messages.append(ai_1)
-    mongo_messages.append(user_2)
-    mongo_messages.append(ai_2)
     mongo_messages.append(user)
 
     response = chat(mongo_messages)

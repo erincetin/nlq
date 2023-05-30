@@ -152,15 +152,22 @@ def get_nosql_query_result(request):
     database_type = data.get("database_type")
 
     try:
+        query = json.loads(query)
         client = connect_nosql_db(database_type, username, password, hostname, database)
         db = client[database]
         coll = db[collection]
         result = coll.find(query)
-        db.close()
+
+        query_result = []
+
+        for res in result:
+            res['_id'] = str(res['id'])
+            query_result.append(res)
 
         response = {
             "success": True,
-            "result": result
+            "result": query_result,
+            "columns": query_result[0].keys() if len(query) > 0 else []
         }
         return JsonResponse(response)
 
