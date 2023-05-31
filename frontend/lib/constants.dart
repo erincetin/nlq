@@ -1,7 +1,5 @@
 const List<String> databases = <String>[
-  'Sqlite',
-  'Oracle',
+  'Mysql',
   'Postgresql',
-  'Mariadb',
   'Mongodb',
 ];

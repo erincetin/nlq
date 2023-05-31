@@ -54,13 +54,13 @@ class _MainScreenState extends State<MainScreen> {
       "birimID": "1"
     }
   ];
-  String admin_question = 'default';
+  String collection_question = 'default';
   String link = 'default';
   String database_format = 'default';
   bool _isLoading = false;
   bool _isError = false;
 
-  static String dropdownValue = 'Sqlite';
+  static String dropdownValue = 'Mysql';
   Map<String, dynamic>? decoded;
 
   static List<String> queryResults = [];
@@ -79,15 +79,66 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void admin_questionTextChangeHandler(String input) {
+  void collection_questionTextChangeHandler(String input) {
     setState(() {
-      admin_question = input;
+      collection_question = input;
     });
   }
 
   void database_formatTextChangeHandler(String input) {
     setState(() {
       database_format = input;
+    });
+  }
+
+  Future<void> getnosqldataHandler(String nosql) async {
+    http.Response response;
+    try {
+      response = await http.post(Uri.parse(ApiUrl.getnosqlData),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'query': nosql,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type': dropdownValue.toLowerCase().toString(),
+            'collection': collection_question
+          }));
+
+      if (response.statusCode == 200) {
+        decoded = jsonDecode(response.body.replaceAll('NaN', '\"NaN\"'));
+        if (decoded!["success"] == true) {
+          for (int j = 0; j < decoded!["result"].length; j++) {
+            Map<String, dynamic> tmp = {};
+
+            tmp.addAll(decoded!["result"][j]);
+
+            demo1.add(tmp);
+          }
+          setState(() => queryData.add(demo1));
+        } else {
+          queryData.add(demo1);
+        }
+      }
+    } catch (err) {
+      //Cannot connect to the server
+      setState(() => queryData.add(demo2));
+      print(err);
+    }
+    setState(() {
+      _isLoading = false;
     });
   }
 
@@ -119,7 +170,7 @@ class _MainScreenState extends State<MainScreen> {
       if (response.statusCode == 200) {
         decoded = jsonDecode(response.body);
         if (decoded!["success"] == true) {
-          for (int j = 0; j < decoded!["data"].length; j++) {
+          for (int j = 0; j < decoded!["query"].length; j++) {
             Map<String, dynamic> tmp = {};
             for (int i = 0; i < decoded!["columns"].length; i++) {
               tmp.addAll({decoded!["columns"][i]: decoded!["data"][j][i]});
@@ -141,6 +192,52 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  Future<void> getnoSqlQueryHandler() async {
+    setState(() {
+      _isLoading = true;
+      _isError = false;
+    });
+
+    http.Response response;
+    try {
+      response = await http.post(Uri.parse(ApiUrl.getnosqlQuery),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'question': question,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type': dropdownValue.toLowerCase().toString(),
+            'collection': collection_question
+          }));
+
+      if (response.statusCode == 200) {
+        decoded = jsonDecode(response.body);
+        setState(() => queryResults.add(decoded!["query"].toString()));
+        getnosqldataHandler(decoded!["query"].toString());
+      }
+    } catch (err) {
+      //Cannot connect to the server
+      setState(() => _isError = true);
+      setState(() => queryResults.add(err.toString()));
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
   Future<void> getSqlQueryHandler() async {
     setState(() {
       _isLoading = true;
@@ -149,7 +246,7 @@ class _MainScreenState extends State<MainScreen> {
 
     http.Response response;
     try {
-      response = await http.post(Uri.parse(ApiUrl.getQuery),
+      response = await http.post(Uri.parse(ApiUrl.getsqlQuery),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
@@ -168,7 +265,7 @@ class _MainScreenState extends State<MainScreen> {
                 Provider.of<connectionhandler>(context, listen: false).Password,
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
-            'database_type': dropdownValue.toLowerCase().toString(),
+            'database_type': dropdownValue.toLowerCase().toString()
           }));
 
       if (response.statusCode == 200) {
@@ -232,40 +329,16 @@ class _MainScreenState extends State<MainScreen> {
                 hintText: "Enter your question",
               ),
             ),
-            question == 'admin'
-                ? Column(
-                    children: [
-                      TextField(
-                        onChanged: admin_questionTextChangeHandler,
-                        style: const TextStyle(fontSize: 18),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "Admin question",
-                          prefixIcon: Icon(Icons.search),
-                          hintText: "question(.......)",
-                        ),
-                      ),
-                      TextField(
-                        onChanged: linkTextChangeHandler,
-                        style: const TextStyle(fontSize: 18),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "ML MODEL",
-                          prefixIcon: Icon(Icons.search),
-                          hintText: "Link of model(.......)",
-                        ),
-                      ),
-                      TextField(
-                        onChanged: database_formatTextChangeHandler,
-                        style: const TextStyle(fontSize: 18),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "Database format",
-                          prefixIcon: Icon(Icons.search),
-                          hintText: "format of database(.......)",
-                        ),
-                      )
-                    ],
+            dropdownValue.toLowerCase().toString() == 'mongodb'
+                ? TextField(
+                    onChanged: collection_questionTextChangeHandler,
+                    style: const TextStyle(fontSize: 18),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "Enter collection",
+                      prefixIcon: Icon(Icons.search),
+                      hintText: "Collection(.......)",
+                    ),
                   )
                 : SizedBox(
                     height: 5,
@@ -348,7 +421,13 @@ class _MainScreenState extends State<MainScreen> {
                     onPressed: () {
                       question == ''
                           ? showAlertDialog(context)
-                          : getSqlQueryHandler();
+                          : dropdownValue.toLowerCase().toString() == 'mongodb'
+                              ? getnoSqlQueryHandler()
+                              : (getSqlQueryHandler());
+                      Provider.of<connectionhandler>(context, listen: false)
+                          .Set_Collection(collection_question.toString());
+                      Provider.of<connectionhandler>(context, listen: false)
+                          .Set_type(dropdownValue.toLowerCase().toString());
                     },
                     child: const Text('Convert Query'),
                   ),

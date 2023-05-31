@@ -32,6 +32,7 @@ class _DataPageState extends State<DataPage> {
   String? _searchKey = "id";
   List<Map<String, dynamic>> demo1 = [];
   int _currentPage = 1;
+  String error_message = '';
   bool _isSearch = false;
   List<Map<String, dynamic>> _sourceOriginal = [];
   List<Map<String, dynamic>> _sourceFiltered = [];
@@ -47,6 +48,74 @@ class _DataPageState extends State<DataPage> {
   var random = new Random();
   List<String> exell = [];
   TextEditingController controller_ = TextEditingController();
+  Future<void> getnosqldataHandler(BuildContext context, String sql) async {
+    http.Response response;
+    try {
+      response = await http.post(Uri.parse(ApiUrl.getnosqlData),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'query': sql,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type':
+                Provider.of<connectionhandler>(context, listen: false).type,
+            'collection': Provider.of<connectionhandler>(context, listen: false)
+                .Collection
+          }));
+
+      setState(() {
+        demo1 = [];
+        _sourceOriginal = [];
+        _sourceFiltered = [];
+        _source = [];
+        _selecteds = [];
+        widget.sqlData = [];
+      });
+      if (response.statusCode == 200) {
+        decoded = jsonDecode(response.body.replaceAll('NaN', '\"NaN\"'));
+        if (decoded!["success"] == true) {
+          for (int j = 0; j < decoded!["result"].length; j++) {
+            Map<String, dynamic> tmp = {};
+
+            tmp.addAll(decoded!["result"][j]);
+
+            demo1.add(tmp);
+          }
+          setState(() => widget.sqlData = demo1);
+        } else {}
+      }
+    } catch (err) {
+      //Cannot connect to the server
+      print(err);
+    }
+    setState(() {
+      _isLoading = false;
+    });
+
+    _headers = [];
+    for (int i = 0; i < widget.sqlData[0].keys.toList().length; i++) {
+      _headers.add(DatatableHeader(
+          text: widget.sqlData[0].keys.toList()[i].toString(),
+          value: widget.sqlData[0].keys.toList()[i].toString(),
+          show: true,
+          sortable: true,
+          textAlign: TextAlign.center));
+    }
+  }
+
   Future<void> getdataHandler(BuildContext context, String sql) async {
     http.Response response;
     try {
@@ -69,7 +138,8 @@ class _DataPageState extends State<DataPage> {
                 Provider.of<connectionhandler>(context, listen: false).Password,
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
-            'database_type': "postgresql",
+            'database_type':
+                Provider.of<connectionhandler>(context, listen: false).type,
           }));
 
       setState(() {
@@ -195,7 +265,10 @@ class _DataPageState extends State<DataPage> {
 
   @override
   void initState() {
-    getdataHandler(this.context, widget.sql_querry);
+    Provider.of<connectionhandler>(this.context, listen: false).type ==
+            'mongodb'
+        ? getnosqldataHandler(this.context, widget.sql_querry)
+        : getdataHandler(this.context, widget.sql_querry);
     _total = widget.sqlData.length;
     super.initState();
     _headers = [];
@@ -240,186 +313,225 @@ class _DataPageState extends State<DataPage> {
               children: [
             Column(
               children: [
-                Container(
-                  margin: EdgeInsets.all(10),
-                  padding: EdgeInsets.all(0),
-                  constraints: BoxConstraints(
-                    maxHeight: 500,
-                  ),
-                  child: Card(
-                    elevation: 1,
-                    shadowColor: Colors.black,
-                    clipBehavior: Clip.none,
-                    child: ResponsiveDatatable(
-                      reponseScreenSizes: [ScreenSize.xs],
-                      actions: [
-                        if (_isSearch)
-                          Expanded(
-                              child: TextField(
-                            decoration: InputDecoration(
-                                hintText: 'Enter search term based on ' +
-                                    _searchKey!
-                                        .replaceAll(new RegExp('[\\W_]+'), ' ')
-                                        .toUpperCase(),
-                                prefixIcon: IconButton(
-                                    icon: Icon(Icons.cancel),
+                widget.sqlData.length == 0
+                    ? Container(
+                        alignment: Alignment.center,
+                        margin: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(0),
+                        constraints: BoxConstraints(
+                          maxHeight: 500,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 50.0,
+                            ),
+                            SizedBox(height: 10.0),
+                            Text(
+                              'Invalid syntax!',
+                              style: TextStyle(
+                                  fontSize: 18.0, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 10.0),
+                            Text(
+                              "Please fix your query ",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 16.0),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        margin: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(0),
+                        constraints: BoxConstraints(
+                          maxHeight: 500,
+                        ),
+                        child: Card(
+                          elevation: 1,
+                          shadowColor: Colors.black,
+                          clipBehavior: Clip.none,
+                          child: ResponsiveDatatable(
+                            reponseScreenSizes: [ScreenSize.xs],
+                            actions: [
+                              if (_isSearch)
+                                Expanded(
+                                    child: TextField(
+                                  decoration: InputDecoration(
+                                      hintText: 'Enter search term based on ' +
+                                          _searchKey!
+                                              .replaceAll(
+                                                  new RegExp('[\\W_]+'), ' ')
+                                              .toUpperCase(),
+                                      prefixIcon: IconButton(
+                                          icon: Icon(Icons.cancel),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isSearch = false;
+                                            });
+                                            _initializeData();
+                                          }),
+                                      suffixIcon: IconButton(
+                                          icon: Icon(Icons.search),
+                                          onPressed: () {})),
+                                  onSubmitted: (value) {
+                                    _filterData(value);
+                                  },
+                                )),
+                              if (!_isSearch)
+                                IconButton(
+                                    icon: Icon(Icons.search),
                                     onPressed: () {
                                       setState(() {
-                                        _isSearch = false;
+                                        _isSearch = true;
                                       });
-                                      _initializeData();
-                                    }),
-                                suffixIcon: IconButton(
-                                    icon: Icon(Icons.search),
-                                    onPressed: () {})),
-                            onSubmitted: (value) {
-                              _filterData(value);
+                                    })
+                            ],
+                            headers: _headers,
+                            source: _source,
+                            selecteds: _selecteds,
+                            autoHeight: false,
+                            dropContainer: (data) {
+                              return _DropDownContainer(data: data);
                             },
-                          )),
-                        if (!_isSearch)
-                          IconButton(
-                              icon: Icon(Icons.search),
-                              onPressed: () {
-                                setState(() {
-                                  _isSearch = true;
-                                });
-                              })
-                      ],
-                      headers: _headers,
-                      source: _source,
-                      selecteds: _selecteds,
-                      autoHeight: false,
-                      dropContainer: (data) {
-                        return _DropDownContainer(data: data);
-                      },
-                      onChangedRow: (value, header) {
-                        /// print(value);
-                        /// print(header);
-                      },
-                      onSubmittedRow: (value, header) {
-                        /// print(value);
-                        /// print(header);
-                      },
-                      onTabRow: (data) {},
-                      onSort: (value) {
-                        setState(() => _isLoading = true);
+                            onChangedRow: (value, header) {
+                              /// print(value);
+                              /// print(header);
+                            },
+                            onSubmittedRow: (value, header) {
+                              /// print(value);
+                              /// print(header);
+                            },
+                            onTabRow: (data) {},
+                            onSort: (value) {
+                              setState(() => _isLoading = true);
 
-                        setState(() {
-                          _sortColumn = value;
-                          _sortAscending = !_sortAscending;
-                          if (_sortAscending) {
-                            _sourceFiltered.sort((a, b) =>
-                                b["$_sortColumn"].compareTo(a["$_sortColumn"]));
-                          } else {
-                            _sourceFiltered.sort((a, b) =>
-                                a["$_sortColumn"].compareTo(b["$_sortColumn"]));
-                          }
-                          var _rangeTop =
-                              _currentPerPage! < _sourceFiltered.length
-                                  ? _currentPerPage!
-                                  : _sourceFiltered.length;
-                          _source =
-                              _sourceFiltered.getRange(0, _rangeTop).toList();
-                          _searchKey = value;
+                              setState(() {
+                                _sortColumn = value;
+                                _sortAscending = !_sortAscending;
+                                if (_sortAscending) {
+                                  _sourceFiltered.sort((a, b) =>
+                                      b["$_sortColumn"]
+                                          .compareTo(a["$_sortColumn"]));
+                                } else {
+                                  _sourceFiltered.sort((a, b) =>
+                                      a["$_sortColumn"]
+                                          .compareTo(b["$_sortColumn"]));
+                                }
+                                var _rangeTop =
+                                    _currentPerPage! < _sourceFiltered.length
+                                        ? _currentPerPage!
+                                        : _sourceFiltered.length;
+                                _source = _sourceFiltered
+                                    .getRange(0, _rangeTop)
+                                    .toList();
+                                _searchKey = value;
 
-                          _isLoading = false;
-                        });
-                      },
-                      expanded: _expanded,
-                      sortAscending: _sortAscending,
-                      sortColumn: _sortColumn,
-                      isLoading: _isLoading,
-                      footers: [
-                        TextButton(
-                          style: ButtonStyle(
-                            backgroundColor:
-                                MaterialStateProperty.all<Color>(Colors.blue),
-                            foregroundColor:
-                                MaterialStateProperty.all<Color>(Colors.white),
-                          ),
-                          onPressed: () async {
-                            showAlertDialog(this.context);
-                          },
-                          child: Text('Export as Excel'),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 15),
-                          child: Text("Rows per page:"),
-                        ),
-                        if (_perPages.isNotEmpty)
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 15),
-                            child: DropdownButton<int>(
-                              value: _currentPerPage,
-                              items: _perPages
-                                  .map((e) => DropdownMenuItem<int>(
-                                        child: Text("$e"),
-                                        value: e,
-                                      ))
-                                  .toList(),
-                              onChanged: (dynamic value) {
-                                setState(() {
-                                  _currentPerPage = value;
-                                  _currentPage = 1;
-                                  _resetData();
-                                });
-                              },
-                              isExpanded: false,
-                            ),
-                          ),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 15),
-                          child: Text(
-                              "$_currentPage - $_currentPerPage of $_total"),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios,
-                            size: 16,
-                          ),
-                          onPressed: _currentPage == 1
-                              ? null
-                              : () {
-                                  var _nextSet =
-                                      _currentPage - _currentPerPage!;
-                                  setState(() {
-                                    _currentPage = _nextSet > 1 ? _nextSet : 1;
-                                    _resetData(start: _currentPage - 1);
-                                  });
+                                _isLoading = false;
+                              });
+                            },
+                            expanded: _expanded,
+                            sortAscending: _sortAscending,
+                            sortColumn: _sortColumn,
+                            isLoading: _isLoading,
+                            footers: [
+                              TextButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.blue),
+                                  foregroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.white),
+                                ),
+                                onPressed: () async {
+                                  showAlertDialog(this.context);
                                 },
-                          padding: EdgeInsets.symmetric(horizontal: 15),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.arrow_forward_ios, size: 16),
-                          onPressed:
-                              _currentPage + _currentPerPage! - 1 > _total!
-                                  ? null
-                                  : () {
-                                      var _nextSet =
-                                          _currentPage + _currentPerPage!;
-
+                                child: Text('Export as Excel'),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 15),
+                                child: Text("Rows per page:"),
+                              ),
+                              if (_perPages.isNotEmpty)
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: DropdownButton<int>(
+                                    value: _currentPerPage,
+                                    items: _perPages
+                                        .map((e) => DropdownMenuItem<int>(
+                                              child: Text("$e"),
+                                              value: e,
+                                            ))
+                                        .toList(),
+                                    onChanged: (dynamic value) {
                                       setState(() {
-                                        _currentPage = _nextSet < _total!
-                                            ? _nextSet
-                                            : _total! - _currentPerPage!;
-                                        _resetData(start: _nextSet - 1);
+                                        _currentPerPage = value;
+                                        _currentPage = 1;
+                                        _resetData();
                                       });
                                     },
-                          padding: EdgeInsets.symmetric(horizontal: 15),
-                        )
-                      ],
-                      headerDecoration: BoxDecoration(
-                        color: Colors.blue,
+                                    isExpanded: false,
+                                  ),
+                                ),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 15),
+                                child: Text(
+                                    "$_currentPage - $_currentPerPage of $_total"),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.arrow_back_ios,
+                                  size: 16,
+                                ),
+                                onPressed: _currentPage == 1
+                                    ? null
+                                    : () {
+                                        var _nextSet =
+                                            _currentPage - _currentPerPage!;
+                                        setState(() {
+                                          _currentPage =
+                                              _nextSet > 1 ? _nextSet : 1;
+                                          _resetData(start: _currentPage - 1);
+                                        });
+                                      },
+                                padding: EdgeInsets.symmetric(horizontal: 15),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.arrow_forward_ios, size: 16),
+                                onPressed: _currentPage + _currentPerPage! - 1 >
+                                        _total!
+                                    ? null
+                                    : () {
+                                        var _nextSet =
+                                            _currentPage + _currentPerPage!;
+
+                                        setState(() {
+                                          _currentPage = _nextSet < _total!
+                                              ? _nextSet
+                                              : _total! - _currentPerPage!;
+                                          _resetData(start: _nextSet - 1);
+                                        });
+                                      },
+                                padding: EdgeInsets.symmetric(horizontal: 15),
+                              )
+                            ],
+                            headerDecoration: BoxDecoration(
+                              color: Colors.blue,
+                            ),
+                            selectedDecoration: BoxDecoration(
+                              color: Colors.blue,
+                            ),
+                            headerTextStyle: TextStyle(color: Colors.white),
+                            rowTextStyle: TextStyle(color: Colors.black),
+                            selectedTextStyle: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ),
-                      selectedDecoration: BoxDecoration(
-                        color: Colors.blue,
-                      ),
-                      headerTextStyle: TextStyle(color: Colors.white),
-                      rowTextStyle: TextStyle(color: Colors.black),
-                      selectedTextStyle: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
                 ElevatedButton(
                   child: const Text('Show the Query'),
                   onPressed: () {
@@ -448,8 +560,15 @@ class _DataPageState extends State<DataPage> {
                                     child: const Text('Query Again'),
                                     onPressed: () {
                                       setState(() {
-                                        getdataHandler(context,
-                                            controller_.text.toString());
+                                        Provider.of<connectionhandler>(
+                                                        this.context,
+                                                        listen: false)
+                                                    .type ==
+                                                'mongodb'
+                                            ? getnosqldataHandler(
+                                                this.context, widget.sql_querry)
+                                            : getdataHandler(context,
+                                                controller_.text.toString());
                                         _initializeData();
                                         _resetData();
                                       });

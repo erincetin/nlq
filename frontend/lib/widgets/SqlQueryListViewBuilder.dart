@@ -86,13 +86,16 @@ class _SqlQueryListViewBuilderState extends State<SqlQueryListViewBuilder> {
                 Provider.of<connectionhandler>(context, listen: false).Password,
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
-            'database_type': "postgresql",
+            'database_type':
+                Provider.of<connectionhandler>(context, listen: false).type,
+            'collection': Provider.of<connectionhandler>(context, listen: false)
+                .Collection,
           }));
 
       if (response.statusCode == 200) {
         decoded = jsonDecode(response.body);
         if (decoded!["success"] == true) {
-          for (int j = 0; j < decoded!["data"].length; j++) {
+          for (int j = 0; j < decoded!["result"].length; j++) {
             Map<String, dynamic> tmp = {};
             for (int i = 0; i < decoded!["columns"].length; i++) {
               tmp.addAll({decoded!["columns"][i]: decoded!["data"][j][i]});
@@ -100,6 +103,57 @@ class _SqlQueryListViewBuilderState extends State<SqlQueryListViewBuilder> {
             setState(() {
               demo1.add(tmp);
             });
+          }
+        } else {
+          demo1 = demo2;
+        }
+      }
+    } catch (err) {
+      //Cannot connect to the server
+
+      print(err);
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> getnosqldataHandler_(String sql) async {
+    http.Response response;
+    try {
+      response = await http.post(Uri.parse(ApiUrl.getnosqlData),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'query': sql,
+            'hostname': Provider.of<connectionhandler>(context, listen: false)
+                    .Server
+                    .toString() +
+                ':' +
+                Provider.of<connectionhandler>(context, listen: false)
+                    .Port
+                    .toString(),
+            'username':
+                Provider.of<connectionhandler>(context, listen: false).Username,
+            'password':
+                Provider.of<connectionhandler>(context, listen: false).Password,
+            'database':
+                Provider.of<connectionhandler>(context, listen: false).dataname,
+            'database_type':
+                Provider.of<connectionhandler>(context, listen: false).type,
+            'collection': Provider.of<connectionhandler>(context, listen: false)
+                .Collection,
+          }));
+
+      if (response.statusCode == 200) {
+        decoded = jsonDecode(response.body.replaceAll('NaN', '\"NaN\"'));
+        if (decoded!["success"] == true) {
+          for (int j = 0; j < decoded!["result"].length; j++) {
+            Map<String, dynamic> tmp = {};
+
+            tmp.addAll(decoded!["result"][j]);
+            setState(() => demo1.add(tmp));
           }
         } else {
           demo1 = demo2;
@@ -174,8 +228,13 @@ class _SqlQueryListViewBuilderState extends State<SqlQueryListViewBuilder> {
                               MaterialStateProperty.all<Color>(Colors.black),
                         ),
                         onPressed: () async {
-                          await getdataHandler_(
-                              widget.queries[l - i - 1].toString());
+                          Provider.of<connectionhandler>(context, listen: false)
+                                      .type ==
+                                  'mongodb'
+                              ? await getdataHandler_(
+                                  widget.queries[l - i - 1].toString())
+                              : await getdataHandler_(
+                                  widget.queries[l - i - 1].toString());
                           Navigator.push(
                             context,
                             MaterialPageRoute(
