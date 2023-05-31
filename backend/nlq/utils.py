@@ -78,7 +78,7 @@ def connect_nosql_db(db_type, username, password, server, db):
 
 
 def chat_fewshot_mongo(query, database):
-    chat = ChatOpenAI(temperature=0)
+    chat = ChatOpenAI(model="gpt-4", temperature=0)
     mongo_messages = []
     system = SystemMessage(
         content="You are a MongoDB query generator for a database with the following collections and some samples from database are:\n\n\n" + database + "\n only return generated query. Do not explain anything. Query must be work on python. Give only dictionary")
