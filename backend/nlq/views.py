@@ -63,7 +63,8 @@ def get_query_result(request):
 
         columns = [col for col in result.keys()]
         data = [list(res) for res in result.fetchall()]
-
+        connection.close()
+        engine.dispose()
         # print(type(data), type(data[0]))
         response = {
             "success": True,
@@ -153,12 +154,14 @@ def get_nosql_query_result(request):
     database_type = data.get("database_type")
 
     try:
-        query = json.loads(query)
+        # query = json.loads(query)
         client = connect_nosql_db(database_type, username, password, hostname, database)
         db = client[database]
         coll = db[collection]
-        result = coll.find(query)
-
+        # result = coll.find(query)
+        query = "".join(query.split('.')[2:])
+        query = "coll." + query
+        result = eval(query)
         query_result = []
 
         for res in result:

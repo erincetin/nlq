@@ -81,8 +81,9 @@ def chat_fewshot_mongo(query, database):
     chat = ChatOpenAI(model="gpt-4", temperature=0)
     mongo_messages = []
     system = SystemMessage(
-        content="You are a MongoDB query generator for a database with the following collections and some samples from database are:\n\n\n" + database + "\n only return generated query. Do not explain anything. Query must be work on python. Give only dictionary")
-
+        content="You are a MongoDB query generator for a database with the following collections and some samples from database are:\n\n\n"
+                + database +
+                "\n Do not explain anything. Query must be work on python.")
     user = HumanMessage(content=query)
     mongo_messages.append(system)
     mongo_messages.append(user)
