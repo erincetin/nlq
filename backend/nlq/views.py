@@ -89,7 +89,7 @@ def get_query_result(request):
 # get collection names to user since they may not have these
 @csrf_exempt
 def get_nosql_collections(request):
-    if request.method != "GET":
+    if request.method != "POST":
         return JsonResponse(
             {"status": "error", "message": "Wrong method"}, status=405
         )
