@@ -7,4 +7,5 @@ urlpatterns = [
     path('get-query-data', views.get_query_result),
     path('get-nosql-query', views.get_nosql_query),
     path('get-nosql-query-data', views.get_nosql_query_result),
+    path('get-collections', views.get_nosql_collections)
 ]
