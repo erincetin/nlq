@@ -36,6 +36,9 @@ def get_sql_query(request):
     query = query[:-4]
     query = query[query.find("select"):]
 
+    tmp = query.split('"')
+    query = "\'".join(tmp)
+
     return JsonResponse({
         "query": query
     })
