@@ -686,12 +686,12 @@ class _DataPageState extends State<DataPage> {
     Stopwatch stopwatch = Stopwatch()..start();
     List<List<String>> list = [];
     List<String> list2 = [];
-    for (int i = 0; i < widget.sqlData[0].keys.toList().length; i++) {
-      list2.add(widget.sqlData[0].keys.toList()[i]);
+    for (int i = 0; i < this._sourceFiltered[0].keys.toList().length; i++) {
+      list2.add(_sourceFiltered[0].keys.toList()[i]);
     }
     list.add(list2);
     list2 = [];
-    for (var data in widget.sqlData) {
+    for (var data in _sourceFiltered) {
       for (var sei in data.values.toList()) {
         list2.add(sei.toString());
       }
@@ -743,7 +743,7 @@ class _DataPageState extends State<DataPage> {
       child: Text("Save"),
       onPressed: () {
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        _sourcetoarray(_source);
+        _sourcetoarray(_sourceFiltered);
         main(exell);
       },
     );

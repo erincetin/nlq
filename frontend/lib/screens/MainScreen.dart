@@ -22,45 +22,17 @@ class _MainScreenState extends State<MainScreen> {
 
   List<Map<String, dynamic>> demo2 = [
     {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "celal",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "songül",
-      "password": "Esyc",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "beyaz",
-      "userID": "0",
-      "userName": "ertuğrul",
-      "password": "Esy",
-      "lvl": "admin",
-      "birimID": "1"
-    },
-    {
-      "rengi": "demo2",
-      "userID": "0",
-      "userName": "ertuğrul",
-      "password": "Esy",
-      "lvl": "admin",
-      "birimID": "1"
+      "error": "error",
     }
   ];
-  String collection_question = 'default';
+
   String link = 'default';
   String database_format = 'default';
   bool _isLoading = false;
   bool _isError = false;
 
   static String dropdownValue = 'Mysql';
+  static String dropdownValue_collection = 'Default';
   Map<String, dynamic>? decoded;
 
   static List<String> queryResults = [];
@@ -76,12 +48,6 @@ class _MainScreenState extends State<MainScreen> {
   void linkTextChangeHandler(String input) {
     setState(() {
       link = input;
-    });
-  }
-
-  void collection_questionTextChangeHandler(String input) {
-    setState(() {
-      collection_question = input;
     });
   }
 
@@ -114,7 +80,8 @@ class _MainScreenState extends State<MainScreen> {
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
             'database_type': dropdownValue.toLowerCase().toString(),
-            'collection': collection_question
+            'collection':
+                Provider.of<connectionhandler>(context, listen: false).Collect
           }));
 
       if (response.statusCode == 200) {
@@ -220,7 +187,8 @@ class _MainScreenState extends State<MainScreen> {
             'database':
                 Provider.of<connectionhandler>(context, listen: false).dataname,
             'database_type': dropdownValue.toLowerCase().toString(),
-            'collection': collection_question
+            'collection':
+                Provider.of<connectionhandler>(context, listen: false).Collect
           }));
 
       if (response.statusCode == 200) {
@@ -315,12 +283,14 @@ class _MainScreenState extends State<MainScreen> {
       ),
       drawer: SideBar(),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
             TextField(
               autocorrect: true,
-              onChanged: questionTextChangeHandler,
+              onChanged: (value) {
+                questionTextChangeHandler(value);
+              },
               style: const TextStyle(fontSize: 18),
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
@@ -329,20 +299,9 @@ class _MainScreenState extends State<MainScreen> {
                 hintText: "Enter your question",
               ),
             ),
-            dropdownValue.toLowerCase().toString() == 'mongodb'
-                ? TextField(
-                    onChanged: collection_questionTextChangeHandler,
-                    style: const TextStyle(fontSize: 18),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Enter collection",
-                      prefixIcon: Icon(Icons.search),
-                      hintText: "Collection(.......)",
-                    ),
-                  )
-                : SizedBox(
-                    height: 5,
-                  ),
+            SizedBox(
+              height: 10,
+            ),
             Row(
               children: [
                 SizedBox(
@@ -389,6 +348,8 @@ class _MainScreenState extends State<MainScreen> {
                       onChanged: (String? value) {
                         setState(() {
                           dropdownValue = value!;
+                          Provider.of<connectionhandler>(context, listen: false)
+                              .Set_type(dropdownValue.toLowerCase().toString());
                         });
                       },
                       items: databases
@@ -401,6 +362,66 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 ),
+                SizedBox(
+                  width: 30,
+                ),
+                dropdownValue != "Mongodb"
+                    ? SizedBox()
+                    : Container(
+                        width: 150,
+                        decoration: BoxDecoration(
+                            color: Colors.blue[100]!,
+                            border: Border.all(
+                              color: Colors.blue[400]!,
+                            ),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(22))),
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Choose Collection",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 17,
+                              background: Paint()
+                                ..strokeWidth = 25.0
+                                ..color = Colors.transparent
+                                ..style = PaintingStyle.fill
+                                ..strokeJoin = StrokeJoin.round),
+                        ),
+                      ),
+                SizedBox(
+                  width: 30,
+                ),
+                dropdownValue != "Mongodb"
+                    ? SizedBox()
+                    : SizedBox(
+                        height: 45,
+                        width: 150,
+                        child: Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                          decoration: BoxDecoration(
+                              color: Colors.blue[200]!,
+                              borderRadius: BorderRadius.circular(20)),
+                          child: DropdownButtonFormField<String>(
+                            value: dropdownValue_collection,
+                            icon: const Icon(Icons.arrow_downward),
+                            elevation: 8,
+                            style: const TextStyle(color: Colors.black),
+                            onChanged: (String? value) {},
+                            items: Provider.of<connectionhandler>(this.context,
+                                    listen: false)
+                                .Collect
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
               ],
             ),
             SizedBox(
@@ -425,7 +446,11 @@ class _MainScreenState extends State<MainScreen> {
                               ? getnoSqlQueryHandler()
                               : (getSqlQueryHandler());
                       Provider.of<connectionhandler>(context, listen: false)
-                          .Set_Collection(collection_question.toString());
+                          .Set_Collection(Provider.of<connectionhandler>(
+                                  context,
+                                  listen: false)
+                              .Collect
+                              .toString());
                       Provider.of<connectionhandler>(context, listen: false)
                           .Set_type(dropdownValue.toLowerCase().toString());
                     },

@@ -11,6 +11,10 @@ class ApiUrl {
     return ApiUrl.serverIp + "/get-nosql-query";
   }
 
+  static get getcollection {
+    return ApiUrl.serverIp + "/get-collections";
+  }
+
   static get getData {
     return ApiUrl.serverIp + "/get-query-data";
   }
