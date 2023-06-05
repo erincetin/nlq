@@ -8,6 +8,7 @@ from .utils import connect_sql_db, get_sql, database_info, connect_nosql_db, mon
 from django.views.decorators.csrf import csrf_exempt
 
 from sqlalchemy import create_engine, text
+import re
 # Create your views here.
 
 @csrf_exempt
@@ -162,8 +163,15 @@ def get_nosql_query_result(request):
         db = client[database]
         coll = db[collection]
         # result = coll.find(query)
-        query = "".join(query.split('.')[2:])
+        query = ".".join(query.split('.')[2:])
         query = "coll." + query
+
+        sort_params = re.findall('\.sort\(\{\"(\w*)\":\s(-1|1)}\)', query)
+
+        for sort_param in sort_params:
+            query = query.replace("sort({\"" + sort_param[0] + "\": " + sort_param[1] + "})", f"sort(\"{sort_param[0]}\", {sort_param[1]})")
+        # print(sort_params)
+
         result = eval(query)
         query_result = []
 
