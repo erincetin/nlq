@@ -1,11 +1,16 @@
 # NLQ Project - A METU CENG Capstone Project
 
-NLQ is a natural language to NoSQL or SQL query conversion application.
+NLQ is a natural language to NoSQL or SQL query conversion application. It uses Flan-T5 for SQL query conversion and OpenAI API for NoSQL query conversion.
+
+## Background
+
+## Installation
 
 
-# Team Members
-Burak Erinç Çetin
-Canay Bozkuş
-Burak Bahar
-Celal Kekeç
-Talha Doğu
+## Team Members
+
+- Burak Erinç Çetin : github.com/erincetin
+- Canay Bozkuş :
+- Burak Bahar :
+- Celal Kekeç :
+- Talha Doğu :
