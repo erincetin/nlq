@@ -1,14 +1,11 @@
-DOWNLOAD PROJECT
+### NLQ Project - A METU CENG Capstone Project
 
-git clone https://gitlab.ceng.metu.edu.tr/group-27/nlq.git
-enter username: e1234567
-enter password: ********
+NLQ is a natural language to NoSQL or SQL query conversion application.
 
 
-COMMIT CHANGES
-
-in project file
-
-git add .
-git commit -m "MESSAGE"
-git push -u origin main
+# Team Members
+Burak Erinç Çetin
+Canay Bozkuş
+Burak Bahar
+Celal Kekeç
+Talha Doğu
