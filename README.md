@@ -12,7 +12,7 @@ NLQ is a natural language to NoSQL or SQL query conversion application. It uses 
 - Burak Erinç Çetin : github.com/erincetin
 - Canay Bozkuş : github.com/CanayBozkus
 - Burak Bahar : github.com/Burak-Bahar
-- Celal Kekeç :
+- Celal Kekeç : github.com/celal9
 - Talha Doğu :
 
 ## Supervisors:
