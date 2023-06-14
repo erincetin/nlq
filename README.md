@@ -1,4 +1,4 @@
-### NLQ Project - A METU CENG Capstone Project
+# NLQ Project - A METU CENG Capstone Project
 
 NLQ is a natural language to NoSQL or SQL query conversion application.
 
